@@ -1,0 +1,93 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-text);
+  font-family: 'Google Sans', system-ui, sans-serif;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.app-surface {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+}
+
+.app-text-secondary {
+  color: var(--color-text-secondary);
+}
+
+input, button, select, textarea {
+  font-family: inherit;
+}
+
+[data-theme='dark'] .table-light > * > tr {
+  background-color: var(--color-surface);
+  color: var(--color-text-secondary);
+  border-color: var(--color-border);
+}
+
+[data-theme='dark'] .table {
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+[data-theme='dark'] .table-hover > tbody > tr:hover > * {
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+
+[data-theme='dark'] .form-control,
+[data-theme='dark'] .form-select {
+  background-color: var(--color-background);
+  border-color: var(--color-border);
+  color: var(--color-text);
+}
+
+[data-theme='dark'] .form-control:focus,
+[data-theme='dark'] .form-select:focus {
+  background-color: var(--color-background);
+  border-color: var(--color-primary);
+  color: var(--color-text);
+  box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+}
+
+[data-theme='dark'] .form-control::placeholder {
+  color: var(--color-text-secondary);
+}
+
+.table > tbody > tr:hover > td,
+.table > tbody > tr:hover > th {
+  background-color: var(--color-surface) !important;
+  filter: brightness(0.94);
+  color: var(--color-text) !important;
+}
+
+[data-theme='dark'] .table > thead > tr > th,
+[data-theme='dark'] .table > tbody > tr > td,
+[data-theme='dark'] .table > tbody > tr > th {
+  background-color: var(--color-surface) !important;
+  color: var(--color-text) !important;
+  border-color: var(--color-border) !important;
+}
+
+[data-theme='dark'] .table > tbody > tr:hover > td,
+[data-theme='dark'] .table > tbody > tr:hover > th {
+  background-color: var(--color-background) !important;
+  color: var(--color-text) !important;
+}
+
+[data-sileo-viewport] {
+  z-index: 1060 !important;
+}
+[data-sileo-title] {
+  color: white !important;
+}
+[data-sileo-description] {
+  color: rgba(255, 255, 255, 0.95) !important;
+}
+[data-sileo-badge] {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
