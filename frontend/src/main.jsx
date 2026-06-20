@@ -15,9 +15,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <ThemeProvider>
         <AuthProvider>
           <Toaster position="top-center" options={{
-    fill: "#171717",
-    roundness: 16
-  }}/>
+            fill: "#171717",
+            roundness: 16
+          }} />
           <App />
         </AuthProvider>
       </ThemeProvider>

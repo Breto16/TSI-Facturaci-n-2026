@@ -39,4 +39,56 @@ const eliminar = async (id) => {
   await pool.query('DELETE FROM factura_items WHERE id = $1', [id])
 }
 
-module.exports = { listarPorFactura, agregar, actualizar, eliminar }
+const moverItem = async (itemId, facturaDestinoId) => {
+  const { rows } = await pool.query(
+    `UPDATE factura_items SET factura_id = $1 WHERE id = $2 RETURNING *`,
+    [facturaDestinoId, itemId]
+  )
+  return rows[0]
+}
+
+const agregarOIncrementar = async ({ factura_id, producto_id, descripcion, precio_unitario, cantidad }) => {
+  const { rows: existente } = await pool.query(
+    `SELECT id, cantidad FROM factura_items
+     WHERE factura_id = $1 AND producto_id = $2`,
+    [factura_id, producto_id]
+  )
+
+  if (existente.length > 0) {
+    const nuevaCantidad = existente[0].cantidad + cantidad
+    const total = precio_unitario * nuevaCantidad
+    const { rows } = await pool.query(
+      `UPDATE factura_items SET cantidad = $1, total = $2 WHERE id = $3 RETURNING *`,
+      [nuevaCantidad, total, existente[0].id]
+    )
+    return rows[0]
+  } else {
+    return agregar({ factura_id, producto_id, descripcion, precio_unitario, cantidad })
+  }
+}
+
+const decrementarOEliminar = async (itemId, cantidad) => {
+  const { rows: current } = await pool.query(
+    'SELECT * FROM factura_items WHERE id = $1', [itemId]
+  )
+  if (!current[0]) return null
+
+  if (current[0].cantidad <= cantidad) {
+    await pool.query('DELETE FROM factura_items WHERE id = $1', [itemId])
+    return null
+  }
+
+  const nuevaCantidad = current[0].cantidad - cantidad
+  const total = current[0].precio_unitario * nuevaCantidad
+  const { rows } = await pool.query(
+    `UPDATE factura_items SET cantidad = $1, total = $2 WHERE id = $3 RETURNING *`,
+    [nuevaCantidad, total, itemId]
+  )
+  return rows[0]
+}
+
+module.exports = {
+  listarPorFactura, agregar, actualizar, eliminar,
+  moverItem, agregarOIncrementar, decrementarOEliminar
+}
+

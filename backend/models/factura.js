@@ -123,7 +123,7 @@ const actualizarEstado = async (id, estado, extras = {}) => {
   return rows[0]
 }
 
-const recalcularTotales = async (id, descuento = null, cobrarServicio = true) => {
+const recalcularTotales = async (id, descuento = null, cobrarServicio = true, datosTrucha = null) => {
   const { rows: items } = await pool.query(
     'SELECT SUM(total) as subtotal FROM factura_items WHERE factura_id = $1',
     [id]
@@ -132,6 +132,19 @@ const recalcularTotales = async (id, descuento = null, cobrarServicio = true) =>
   const servicio = cobrarServicio ? Math.round(subtotal * 0.1) : 0
   const desc = descuento != null ? parseFloat(descuento) : 0
   const total = subtotal - desc + servicio
+
+  if (datosTrucha) {
+    const { tieneTrucha, gramos, precioGramo, total: truchaTotal } = datosTrucha
+    const { rows } = await pool.query(
+      `UPDATE facturas SET
+        subtotal = $1, servicio = $2, descuento = $3, total = $4,
+        tiene_trucha = $5, trucha_gramos = $6, trucha_precio_gramo = $7, trucha_total = $8
+       WHERE id = $9
+       RETURNING *`,
+      [subtotal, servicio, desc, total, tieneTrucha, gramos, precioGramo, truchaTotal, id]
+    )
+    return rows[0]
+  }
 
   const { rows } = await pool.query(
     `UPDATE facturas SET

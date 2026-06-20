@@ -8,9 +8,8 @@ import InicioPage from './pages/Inicio/InicioPage';
 import FacturaPage from './pages/Facturas/FacturaPage'
 import FacturasPage from './pages/Facturas/FacturasPage'
 import PersonalPage from './pages/Personal/PersonalPage'
-// ...
-
-const CierrePage = () => <h2>Cierre (pendiente, solo admin)</h2>;
+import ConsultasPage from './pages/Consultas/ConsultasPage'
+import CierrePage from './pages/Cierre/CierrePage'
 
 function App() {
   return (
@@ -32,6 +31,7 @@ function App() {
         <Route path="productos" element={<ProductosPage />} />
         <Route path="facturas" element={<FacturasPage />} />
         <Route path="personal" element={<PersonalPage />} />
+        <Route path="consultas" element={<ConsultasPage />} />
         <Route
           path="cierre"
           element={

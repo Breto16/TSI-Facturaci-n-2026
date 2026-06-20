@@ -92,9 +92,9 @@ export default function FacturasPage() {
 
       <div style={{ borderRadius: 16, overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }}>
 
-        <div style={{ background: GRADIENTS.bosque, padding: '1.25rem 1.5rem' }}>
+        <div style={{ background: 'var(--color-primary)', padding: '1.25rem 1.5rem' }}>
           <div className="d-flex align-items-center justify-content-between mb-3">
-            <span className="fw-semibold small text-white" style={{ textTransform: 'uppercase', letterSpacing: 1 }}>
+            <span className="fw-semibold small" style={{ textTransform: 'uppercase', letterSpacing: 1 , color: 'var(--color-text-bg)' }}>
               Historial
             </span>
           </div>
@@ -105,7 +105,7 @@ export default function FacturasPage() {
                 size="sm"
                 value={estado}
                 onChange={e => setEstado(e.target.value)}
-                style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: 'white', fontSize: '0.875rem' }}
+                style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: 'var(--color-text-bg)', fontSize: '0.875rem' }}
               >
                 {ESTADOS.map(e => (
                   <option key={e.value} value={e.value} style={{ color: 'black' }}>{e.label}</option>
@@ -118,7 +118,7 @@ export default function FacturasPage() {
                 type="date"
                 value={fechaDesde}
                 onChange={e => setFechaDesde(e.target.value)}
-                style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: 'white', fontSize: '0.875rem' }}
+                style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: 'var(--color-text-bg)', fontSize: '0.875rem' }}
               />
             </Col>
             <Col xs={6} md={4}>
@@ -127,7 +127,7 @@ export default function FacturasPage() {
                 type="date"
                 value={fechaHasta}
                 onChange={e => setFechaHasta(e.target.value)}
-                style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: 'white', fontSize: '0.875rem' }}
+                style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: 'var(--color-text-bg)', fontSize: '0.875rem' }}
               />
             </Col>
           </Row>

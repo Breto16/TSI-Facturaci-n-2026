@@ -9,7 +9,8 @@ const truchaRoutes = require('./routes/trucha')
 const mesasRoutes = require('./routes/mesas')
 const facturasRoutes = require('./routes/facturas')
 const salonerosRoutes = require('./routes/saloneros')
-
+const impresionRoutes = require('./routes/impresion')
+const consultasRoutes = require('./routes/consultas')
 
 
 const app = express();
@@ -36,6 +37,8 @@ app.use('/api/mesas', mesasRoutes)
 app.use('/api/productos', productosRoutes);
 app.use('/api/facturas', facturasRoutes)
 app.use('/api/saloneros', salonerosRoutes)
+app.use('/api/imprimir', impresionRoutes)
+app.use('/api/consultas', consultasRoutes)
 
 pool.query('SELECT NOW()')
   .then(() => console.log('BD CONECTADA'))

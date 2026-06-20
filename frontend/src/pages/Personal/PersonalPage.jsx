@@ -74,7 +74,7 @@ export default function PersonalPage() {
           <Users size={40} color="var(--color-primary)" />
           <div className="ms-2">
             <h4 className="mb-0 fw-semibold" style={{ color: 'var(--color-text)' }}>Personal</h4>
-            <small style={{ color: 'var(--color-text-secondary)' }}>Administrá los saloneros del restaurante</small>
+            <small style={{ color: 'var(--color-text-secondary)' }}>Administra los saloneros del restaurante</small>
           </div>
         </div>
         <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.875rem' }}>
@@ -85,22 +85,22 @@ export default function PersonalPage() {
       <div style={{ borderRadius: 16, overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }}>
 
         {/* Header */}
-        <div style={{ background: GRADIENTE, padding: '1.25rem 1.5rem' }}>
+        <div style={{ background: 'var(--color-primary)', padding: '1.25rem 1.5rem' }}>
           <div className="d-flex align-items-center justify-content-between mb-0">
-            <span className="fw-semibold small text-white" style={{ textTransform: 'uppercase', letterSpacing: 1 }}>
+            <span className="fw-semibold small" style={{ textTransform: 'uppercase', letterSpacing: 1, color: 'var(--color-text-bg)' }}>
               Saloneros
             </span>
             <div className="d-flex gap-2">
               <button
                 onClick={cargar}
                 disabled={cargando}
-                style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 8, padding: '4px 12px', color: 'white', fontSize: '0.78rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+                style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 8, padding: '4px 12px', color: 'var(--color-text-bg)', fontSize: '0.78rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
               >
                 <RefreshCw size={13} /> Actualizar
               </button>
               <button
                 onClick={() => { setModalNuevo(true); setNombre(''); setError('') }}
-                style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: 8, padding: '4px 12px', color: 'white', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+                style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: 8, padding: '4px 12px', color: 'var(--color-text-bg)', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
               >
                 <Plus size={14} /> Nuevo salonero
               </button>
@@ -203,20 +203,20 @@ export default function PersonalPage() {
       {/* Modal nuevo salonero */}
       <Modal show={modalNuevo} onHide={() => setModalNuevo(false)} centered animation={false} contentClassName="border-0 bg-transparent">
         <div style={{ borderRadius: 16, overflow: 'hidden' }}>
-          <div style={{ background: GRADIENTE, padding: '1.25rem 1.5rem' }}>
+          <div style={{ background: 'var(--color-primary)', padding: '1.25rem 1.5rem' }}>
             <div className="d-flex align-items-center justify-content-between">
               <div className="d-flex align-items-center gap-2">
-                <Users size={20} color="white" />
-                <span className="fw-bold text-white fs-5">Nuevo salonero</span>
+                <Users size={20} color="var(--color-text-bg)" />
+                <span className="fw-bold fs-5" style={{ color: 'var(--color-text-bg)' }}>Nuevo salonero</span>
               </div>
               <button
                 onClick={() => setModalNuevo(false)}
-                style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', color: 'var(--color-text-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               >
                 ✕
               </button>
             </div>
-            <div className="text-white opacity-70 small mt-1">
+            <div className="opacity-70 small mt-1" style={{ color: 'var(--color-text-bg)' }}>
               Ingresá el nombre del salonero para agregarlo al sistema.
             </div>
           </div>
@@ -250,7 +250,7 @@ export default function PersonalPage() {
               <button
                 onClick={handleCrear}
                 disabled={guardando}
-                style={{ background: GRADIENTE, border: 'none', borderRadius: 8, padding: '7px 16px', color: 'white', fontSize: '0.875rem', fontWeight: 500, cursor: 'pointer', opacity: guardando ? 0.7 : 1 }}
+                style={{ background: 'var(--color-primary)', border: 'none', borderRadius: 8, padding: '7px 16px', color: 'var(--color-text-bg)', fontSize: '0.875rem', fontWeight: 500, cursor: 'pointer', opacity: guardando ? 0.7 : 1 }}
               >
                 {guardando ? 'Guardando...' : 'Agregar'}
               </button>

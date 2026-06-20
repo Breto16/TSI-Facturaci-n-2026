@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { Modal } from 'react-bootstrap'
 import { Plus } from 'lucide-react'
 import { sileo } from 'sileo'
@@ -67,6 +67,7 @@ export default function PanelDivision({
     const [modalPago, setModalPago] = useState(false)
     const [tipoPago, setTipoPago] = useState('efectivo')
     const [montoRecibido, setMontoRecibido] = useState('')
+    const [cobrarServicioHija, setCobrarServicioHija] = useState(true)
 
     const handleCrearHija = async () => {
         setCreando(true)
@@ -147,7 +148,24 @@ export default function PanelDivision({
             setProcesando(false)
         }
     }
-
+    useEffect(() => {
+        if (hijaSeleccionada) {
+            setCobrarServicioHija(hijaSeleccionada.servicio > 0 || hijaSeleccionada.subtotal == 0)
+        }
+    }, [hijaSeleccionada?.id])
+    const handleToggleServicioHija = async () => {
+        const nuevo = !cobrarServicioHija
+        setCobrarServicioHija(nuevo)
+        try {
+            await actualizarTotales(hijaSeleccionada.id, {
+                descuento: 0,
+                cobrar_servicio: nuevo,
+            })
+            onRefrescar(hijaSeleccionada.id)
+        } catch {
+            sileo.error({ title: 'Error', description: 'No se pudo actualizar el servicio' })
+        }
+    }
     const esEditable = hijaSeleccionada &&
         (hijaSeleccionada.estado === 'abierta' || hijaSeleccionada.estado === 'impresa')
 
@@ -329,11 +347,27 @@ export default function PanelDivision({
                                 <span style={{ color: 'var(--color-text-secondary)' }}>Subtotal</span>
                                 <span style={{ color: 'var(--color-text)' }}>₡{hijaSubtotal.toLocaleString('es-CR')}</span>
                             </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
-                                <span style={{ color: 'var(--color-text-secondary)' }}>Servicio 10%</span>
+
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem' }}>
+                                <label style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 6,
+                                    color: 'var(--color-text-secondary)',
+                                    cursor: esEditable ? 'pointer' : 'default',
+                                }}>
+                                    <input
+                                        type="checkbox"
+                                        checked={cobrarServicioHija}
+                                        onChange={handleToggleServicioHija}
+                                        disabled={!esEditable}
+                                    />
+                                    Servicio 10%
+                                </label>
                                 <span style={{ color: 'var(--color-text)' }}>₡{hijaServicio.toLocaleString('es-CR')}</span>
                             </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--color-border)', paddingTop: 4, marginTop: 2 }}>
+
+                            <div style={{ display: 'flex', justifyContent: 'space-between',alignItems: 'center', borderTop: '1px solid var(--color-border)', paddingTop: 4, marginTop: 2 }}>
                                 <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--color-text)' }}>Total</span>
                                 <span style={{ fontWeight: 700, fontSize: '1.25rem', color: 'var(--color-success)' }}>
                                     ₡{hijaTotal.toLocaleString('es-CR')}

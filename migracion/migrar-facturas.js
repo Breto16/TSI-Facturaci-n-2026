@@ -47,6 +47,9 @@ async function migrarFacturas(mysqlConn) {
       ? parseFloat(row.precioTruchaCruda) || null
       : null;
 
+    const cobroServicio = Number(row.servicio) === 1
+    const servicioCalculado = cobroServicio ? Math.round((row.subtotal || 0) * 0.10) : 0
+
     await pgPool.query(
       `INSERT INTO facturas (
         id, mesa_id, salonero_id, detalle, estado,
@@ -67,7 +70,7 @@ async function migrarFacturas(mysqlConn) {
         estado,
         row.subtotal || 0,
         row.descuento || 0,
-        row.servicio || 0,
+        servicioCalculado || 0,
         row.total || 0,
         tieneTrucha,
         row.gramostrucha,

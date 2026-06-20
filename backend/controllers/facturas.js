@@ -88,9 +88,17 @@ const putFacturaEstado = async (req, res) => {
 
 const putTotales = async (req, res) => {
   const { id } = req.params
-  const { descuento, cobrar_servicio } = req.body
+  const { descuento, cobrar_servicio, tiene_trucha, trucha_gramos, trucha_precio_gramo, trucha_total } = req.body
+
   try {
-    const factura = await Factura.recalcularTotales(id, descuento, cobrar_servicio !== false)
+    const datosTrucha = tiene_trucha !== undefined ? {
+      tieneTrucha: tiene_trucha,
+      gramos: trucha_gramos || null,
+      precioGramo: trucha_precio_gramo || null,
+      total: trucha_total || null,
+    } : null
+
+    const factura = await Factura.recalcularTotales(id, descuento, cobrar_servicio !== false, datosTrucha)
     res.json(factura)
   } catch (error) {
     console.log(error)

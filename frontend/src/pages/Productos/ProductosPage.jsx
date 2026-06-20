@@ -113,9 +113,9 @@ export default function ProductosPage() {
 
       <div style={{ borderRadius: 16, overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }}>
 
-        <div style={{ background: GRADIENTS.bosque, padding: '1.25rem 1.5rem' }}>
+        <div style={{ background: 'var(--color-primary)', padding: '1.25rem 1.5rem' }}>
           <div className="d-flex align-items-center justify-content-between mb-3">
-            <span className="fw-semibold small text-white" style={{ textTransform: 'uppercase', letterSpacing: 1 }}>
+            <span className="fw-semibold small" style={{ textTransform: 'uppercase', letterSpacing: 1, color: 'var(--color-text-bg)' }}>
               Catálogo
             </span>
             <div className="d-flex gap-2">
@@ -127,7 +127,7 @@ export default function ProductosPage() {
                   border: 'none',
                   borderRadius: 8,
                   padding: '4px 12px',
-                  color: 'white',
+                  color: 'var(--color-text-bg)',
                   fontSize: '0.78rem',
                   cursor: 'pointer',
                   display: 'flex',
@@ -144,9 +144,9 @@ export default function ProductosPage() {
                   border: 'none',
                   borderRadius: 8,
                   padding: '4px 12px',
-                  color: 'white',
+                  color: 'var(--color-text-bg)',
                   fontSize: '0.78rem',
-                  fontWeight: 600,
+                  
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
@@ -159,7 +159,7 @@ export default function ProductosPage() {
           </div>
 
           <InputGroup size="sm">
-            <InputGroup.Text style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: 'white' }}>
+            <InputGroup.Text style={{ background: 'rgba(255,255,255,0.15)', border: 'none', color: 'var(--color-text-bg)' }}>
               <Search size={14} />
             </InputGroup.Text>
             <Form.Control
@@ -169,10 +169,10 @@ export default function ProductosPage() {
               style={{
                 background: 'rgba(255,255,255,0.15)',
                 border: 'none',
-                color: 'white',
+                color: '-var(--color-text-bg)',
                 fontSize: '0.875rem',
               }}
-              className="placeholder-white"
+              className="text-black"
             />
           </InputGroup>
         </div>
@@ -239,7 +239,7 @@ export default function ProductosPage() {
                             cursor: 'pointer',
                             fontWeight: p === pagina ? 600 : 400,
                             background: p === pagina ? 'var(--color-primary)' : 'none',
-                            color: p === pagina ? 'white' : 'var(--color-text)',
+                            color: p === pagina ? 'var(--color-text-bg)' : 'var(--color-text)',
                           }}
                         >
                           {p}

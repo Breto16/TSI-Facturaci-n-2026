@@ -9,6 +9,7 @@ import SelectorProductos from './components/SelectorProductos'
 import CantidadModal from './components/CantidadModal'
 import PanelDivision from './components/PanelDivision'
 import BotonesMover from './components/BotonesMover'
+import { imprimirFactura, abrirCaja } from '../../services/impresionService'
 import {
   getFactura, getItems, agregarItem, actualizarItem,
   eliminarItem, actualizarEncabezado, actualizarEstado,
@@ -19,11 +20,11 @@ import { getMesas } from '../../services/mesasService'
 import { getPrecioTruchaVigente } from '../../services/truchaService'
 
 const ESTADO_CONFIG = {
-  abierta:  { label: 'Abierta',  color: 'var(--color-danger)' },
-  impresa:  { label: 'Impresa',  color: 'var(--color-warning)' },
+  abierta: { label: 'Abierta', color: 'var(--color-danger)' },
+  impresa: { label: 'Impresa', color: 'var(--color-warning)' },
   dividida: { label: 'Dividida', color: 'var(--color-info)' },
-  pagada:   { label: 'Pagada',   color: 'var(--color-success)' },
-  anulada:  { label: 'Anulada',  color: 'var(--color-text-secondary)' },
+  pagada: { label: 'Pagada', color: 'var(--color-success)' },
+  anulada: { label: 'Anulada', color: 'var(--color-text-secondary)' },
 }
 
 const BTN_BASE = {
@@ -134,7 +135,7 @@ export default function FacturaPage() {
 
   useEffect(() => {
     if (hijaSeleccionada) {
-      getItems(hijaSeleccionada.id).then(setItemsHija).catch(() => {})
+      getItems(hijaSeleccionada.id).then(setItemsHija).catch(() => { })
     } else {
       setItemsHija([])
     }
@@ -144,14 +145,38 @@ export default function FacturaPage() {
     const montoDescuento = factura?.subtotal
       ? (Number(factura.subtotal) * desc) / 100
       : 0
+
+    const datosTrucha = mostrarTrucha ? {
+      tiene_trucha: true,
+      trucha_gramos: gramosTrucha ? parseFloat(gramosTrucha) : null,
+      trucha_precio_gramo: precioTruchaGramo || null,
+      trucha_total: gramosTrucha && precioTruchaGramo
+        ? parseFloat(gramosTrucha) * precioTruchaGramo
+        : null,
+    } : {
+      tiene_trucha: false,
+      trucha_gramos: null,
+      trucha_precio_gramo: null,
+      trucha_total: null,
+    }
+
     const f = await actualizarTotales(id, {
       descuento: montoDescuento,
       cobrar_servicio: servicio,
+      ...datosTrucha,
     })
     setFactura(f)
     return f
-  }, [id, factura, descuento, cobrarServicio])
+  }, [id, factura, descuento, cobrarServicio, mostrarTrucha, gramosTrucha, precioTruchaGramo])
+  useEffect(() => {
+    if (cargando || !factura) return
 
+    const timeout = setTimeout(() => {
+      recargarFactura()
+    }, 600)
+
+    return () => clearTimeout(timeout)
+  }, [mostrarTrucha, gramosTrucha])
   const refrescarDivision = async (hijaId) => {
     const [hijasActualizadas, itemsPadreActualizados] = await Promise.all([
       getHijas(id),
@@ -356,13 +381,23 @@ export default function FacturaPage() {
     }
   }
 
+
+
   const handleImprimir = async () => {
     try {
       const f = await actualizarEstado(id, { estado: 'impresa' })
       setFactura(f)
+      await imprimirFactura(id)
       sileo.success({ title: 'Imprimiendo', description: `Factura #${id} enviada a impresora` })
-    } catch {
-      sileo.error({ title: 'Error', description: 'No se pudo imprimir' })
+    } catch (err) {
+      if (err.response?.data?.sinImpresora) {
+        sileo.warning({
+          title: 'Sin impresora',
+          description: 'No se encontró impresora. El estado fue actualizado.',
+        })
+      } else {
+        sileo.error({ title: 'Error', description: 'No se pudo imprimir' })
+      }
     }
   }
 
@@ -463,13 +498,14 @@ export default function FacturaPage() {
 
         {/* Panel izquierdo */}
         <div style={{
-          width: esDividida ? '60%' : editable ? '70%' : '100%',
+          flex: esDividida ? '0 0 60%' : editable ? '0 0 70%' : '1 1 100%',
           display: 'flex',
           flexDirection: 'column',
           borderRight: (esDividida || editable) ? '1px solid var(--color-border)' : 'none',
           overflow: 'hidden',
           padding: '12px',
           gap: 8,
+          minWidth: 0,
         }}>
           <div style={{ flex: 1, borderRadius: 12, border: '1px solid var(--color-border)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
             <TablaItems
@@ -541,6 +577,15 @@ export default function FacturaPage() {
                   </div>
 
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--color-text-secondary)', cursor: 'pointer' }}>
+                      <input type="checkbox" checked={cobrarServicio} onChange={handleToggleServicio} />
+                      Servicio 10%
+                    </label>
+                    <span>₡{Number(factura.servicio).toLocaleString('es-CR')}</span>
+                  </div>
+
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem' }}>
                     <label style={{ color: 'var(--color-text-secondary)' }}>Descuento</label>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       {descuento > 0 && (
@@ -563,13 +608,7 @@ export default function FacturaPage() {
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--color-text-secondary)', cursor: 'pointer' }}>
-                      <input type="checkbox" checked={cobrarServicio} onChange={handleToggleServicio} />
-                      Servicio 10%
-                    </label>
-                    <span>₡{Number(factura.servicio).toLocaleString('es-CR')}</span>
-                  </div>
+
 
                   <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--color-border)', paddingTop: 6, marginTop: 2 }}>
                     <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--color-text)' }}>Total</span>
@@ -632,7 +671,15 @@ export default function FacturaPage() {
 
         {/* Panel derecho */}
         {esDividida ? (
-          <div style={{ width: '30%', padding: '12px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div style={{
+            flex: 1,
+            minWidth: 0,
+            padding: '12px',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            borderLeft: '1px solid var(--color-border)',
+          }}>
             <PanelDivision
               facturapadreId={id}
               hijas={hijas}
@@ -648,7 +695,14 @@ export default function FacturaPage() {
             />
           </div>
         ) : editable ? (
-          <div style={{ width: '30%', padding: '12px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <div style={{
+            flex: '0 0 30%',
+            minWidth: 0,
+            padding: '12px',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+          }}>
             <SelectorProductos
               onSeleccionar={handleSeleccionarProducto}
               focusTrigger={focusTrigger}
@@ -688,12 +742,12 @@ export default function FacturaPage() {
 
       <Modal show={modalPago} onHide={() => setModalPago(false)} centered animation={false} contentClassName="border-0 bg-transparent">
         <div style={{ borderRadius: 16, overflow: 'hidden' }}>
-          <div style={{ background: GRADIENTS.bosque, padding: '1.25rem 1.5rem' }}>
+          <div style={{ background: 'var(--color-primary)', padding: '1.25rem 1.5rem' }}>
             <div className="d-flex align-items-center justify-content-between">
-              <span className="fw-bold text-white fs-5">Cobrar factura #{id}</span>
-              <button onClick={() => setModalPago(false)} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+              <span className="fw-bold fs-5" style={{ color: 'var(--color-text-bg)' }}>Cobrar factura #{id}</span>
+              <button onClick={() => setModalPago(false)} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', color: 'var(--color-text-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
             </div>
-            <div className="text-white opacity-70 small mt-1">
+            <div className="opacity-70 small mt-1" style={{ color: 'var(--color-text-bg)' }}>
               Total a cobrar: <strong>₡{totalFinal.toLocaleString('es-CR')}</strong>
             </div>
           </div>
@@ -706,9 +760,9 @@ export default function FacturaPage() {
                   onClick={() => setTipoPago(tipo)}
                   style={{
                     flex: 1, padding: '8px', borderRadius: 8,
-                    border: `2px solid ${tipoPago === tipo ? 'var(--color-success)' : 'var(--color-border)'}`,
+                    border: `2px solid ${tipoPago === tipo ? 'var(--color-primary)' : 'var(--color-border)'}`,
                     background: 'transparent',
-                    color: tipoPago === tipo ? 'var(--color-success)' : 'var(--color-btn-secondary-text)',
+                    color: tipoPago === tipo ? 'var(--color-primary)' : 'var(--color-btn-secondary-text)',
                     fontWeight: tipoPago === tipo ? 700 : 400,
                     fontSize: '0.875rem', cursor: 'pointer', textTransform: 'capitalize',
                   }}
@@ -719,35 +773,44 @@ export default function FacturaPage() {
             </div>
 
             {tipoPago === 'efectivo' && (
-              <div style={{ marginBottom: '1rem' }}>
-                <label style={{ fontSize: '0.82rem', color: 'var(--color-text-secondary)', display: 'block', marginBottom: 4 }}>
-                  Monto recibido (₡)
-                </label>
-                <input
-                  autoFocus
-                  type="number"
-                  value={montoRecibido}
-                  onChange={e => setMontoRecibido(e.target.value)}
-                  style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '1.1rem', textAlign: 'right' }}
-                />
-                {montoRecibido && (
-                  <div style={{ marginTop: 8, display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem' }}>
-                    <span style={{ color: 'var(--color-text-secondary)' }}>Cambio</span>
-                    <span style={{ fontWeight: 700, fontSize: '1.1rem', color: cambioCalculado >= 0 ? 'var(--color-success)' : 'var(--color-danger)' }}>
-                      ₡{cambioCalculado.toLocaleString('es-CR')}
-                    </span>
-                  </div>
-                )}
+
+              <div style={{ padding: '12px', borderRadius: 8, background: 'var(--color-background)', marginBottom: '1rem', textAlign: 'center' }}>
+
+                <span style={{ fontSize: '3rem', fontWeight: 700, color: 'var(--color-primary)' }}>
+                  ₡{totalFinal.toLocaleString('es-CR')}
+                </span>
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ fontSize: '0.82rem', color: 'var(--color-text-secondary)', display: 'block', marginBottom: 4, textAlign: 'start' }}>
+                    Monto recibido (₡)
+                  </label>
+                  <input
+                    autoFocus
+                    type="number"
+                    value={montoRecibido}
+                    onChange={e => setMontoRecibido(e.target.value)}
+                    style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '1.1rem', textAlign: 'right' }}
+                  />
+                  {montoRecibido && (
+                    <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.9rem' }}>
+                      <span style={{ color: 'var(--color-text-secondary)' }}>Cambio</span>
+                      <span style={{ fontWeight: 700, fontSize: '1.5rem', color: cambioCalculado >= 0 ? 'var(--color-primary)' : 'var(--color-danger)' }}>
+                        ₡{cambioCalculado.toLocaleString('es-CR')}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
+
+
             )}
 
             {tipoPago === 'tarjeta' && (
               <div style={{ padding: '12px', borderRadius: 8, background: 'var(--color-background)', marginBottom: '1rem', textAlign: 'center' }}>
-                <span style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--color-text)' }}>
+                <span style={{ fontSize: '3rem', fontWeight: 700, color: 'var(--color-primary)' }}>
                   ₡{totalFinal.toLocaleString('es-CR')}
                 </span>
                 <div style={{ fontSize: '0.78rem', color: 'var(--color-text-secondary)', marginTop: 4 }}>
-                  Pasar tarjeta por el datafono
+                  Cobrar por el datáfono
                 </div>
               </div>
             )}
@@ -759,7 +822,7 @@ export default function FacturaPage() {
               <button
                 onClick={handlePagar}
                 disabled={procesando || (tipoPago === 'efectivo' && !montoRecibido)}
-                style={{ ...BTN_BASE, border: '1px solid var(--color-success)', color: 'var(--color-success)', opacity: (procesando || (tipoPago === 'efectivo' && !montoRecibido)) ? 0.6 : 1 }}
+                style={{ ...BTN_BASE, border: 'none', background: 'var(--color-primary)', color: 'var(--color-text-bg)', opacity: (procesando || (tipoPago === 'efectivo' && !montoRecibido)) ? 0.6 : 1 }}
               >
                 {procesando ? 'Procesando...' : 'Confirmar pago'}
               </button>

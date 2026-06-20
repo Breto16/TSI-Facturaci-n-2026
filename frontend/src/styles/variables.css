@@ -1,16 +1,18 @@
 :root[data-theme='light'] {
-  --color-background: #f5f5f7;
-  --color-surface: #ffffff;
-  --color-text: #1a1a1a;
+  --color-background: #d3d2d0;
+  --color-surface: #c4cbc4;
+  --color-text: #212529;
   --color-text-secondary: #6b7280;
-  --color-primary: #434c1f;
-  --color-primary-hover: #353d18;
+  --color-text-bg: #f5f5f5;
+  --color-primary: #253a22;
+  --color-secondary: #40653e;
+  --color-primary-hover: #1f441d;
   --color-accent: #b5da2f;
-  --color-success: #16a34a;
-  --color-warning: #facc15;
-  --color-danger: #dc2626;
+  --color-success: #277d46;
+  --color-warning: #bfa917;
+  --color-danger: #983e3e;
   --color-info: #0ea5e9;
-  --color-border: #e5e7eb;
+  --color-border: #bcbcbc;
   --color-btn-secondary-text: #1a1a1a;
   --color-btn-secondary-border: #1a1a1a;
 }
@@ -20,7 +22,9 @@
   --color-surface: #1e1e1e;
   --color-text: #f5f5f5;
   --color-text-secondary: #a1a1aa;
-  --color-primary: #b5da2f;
+  --color-text-bg: #212020;
+  --color-primary: #639a5b;
+  --color-secondary: #7aac77;
   --color-primary-hover: #a0c229;
   --color-accent: #434c1f;
   --color-success: #65cc69;
