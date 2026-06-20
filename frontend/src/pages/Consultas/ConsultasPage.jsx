@@ -48,21 +48,21 @@ export default function ConsultasPage() {
     setResultado(null)
   }, [tab])
 
-const ejecutarConsultaProducto = async (codigos) => {
-  if (codigos.length === 0) {
-    sileo.warning({ title: 'Sin productos', description: 'Seleccioná al menos un producto' })
-    return
+  const ejecutarConsultaProducto = async (codigos) => {
+    if (codigos.length === 0) {
+      sileo.warning({ title: 'Sin productos', description: 'Seleccioná al menos un producto' })
+      return
+    }
+    setCargando(true)
+    try {
+      const data = await ventaPorProductos(codigos, fechaDesde, fechaHasta)
+      setResultado({ tipo: 'producto', ...data })
+    } catch {
+      sileo.error({ title: 'Error', description: 'No se pudo ejecutar la consulta' })
+    } finally {
+      setCargando(false)
+    }
   }
-  setCargando(true)
-  try {
-    const data = await ventaPorProductos(codigos, fechaDesde, fechaHasta)
-    setResultado({ tipo: 'producto', ...data })
-  } catch {
-    sileo.error({ title: 'Error', description: 'No se pudo ejecutar la consulta' })
-  } finally {
-    setCargando(false)
-  }
-}
 
   const ejecutarConsultaServicio = async () => {
     if (!saloneroId) {
@@ -80,17 +80,17 @@ const ejecutarConsultaProducto = async (codigos) => {
     }
   }
 
-const ejecutarConsultaRapida = async (consulta) => {
-  setCargando(true)
-  try {
-    const data = await ventaPorProductos(consulta.producto_codigos, fechaDesde, fechaHasta)
-    setResultado({ tipo: 'producto', ...data })
-  } catch {
-    sileo.error({ title: 'Error', description: 'No se pudo ejecutar la consulta' })
-  } finally {
-    setCargando(false)
+  const ejecutarConsultaRapida = async (consulta) => {
+    setCargando(true)
+    try {
+      const data = await ventaPorProductos(consulta.producto_codigos, fechaDesde, fechaHasta)
+      setResultado({ tipo: 'producto', ...data })
+    } catch {
+      sileo.error({ title: 'Error', description: 'No se pudo ejecutar la consulta' })
+    } finally {
+      setCargando(false)
+    }
   }
-}
 
   const handleEliminarRapida = async (id, titulo, e) => {
     e.stopPropagation()
