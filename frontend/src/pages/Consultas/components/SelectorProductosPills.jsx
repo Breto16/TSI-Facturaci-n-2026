@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Search, X } from 'lucide-react'
-import { getProductos } from '../../../services/productosService'
+import { getProductosParaConsultas } from '../../../services/productosService'
 
 export default function SelectorProductosPills({ seleccionados, onChange }) {
   const [productos, setProductos] = useState([])
@@ -9,7 +9,7 @@ export default function SelectorProductosPills({ seleccionados, onChange }) {
   const contenedorRef = useRef(null)
 
   useEffect(() => {
-    getProductos().then(setProductos)
+    getProductosParaConsultas().then(setProductos)
   }, [])
 
   useEffect(() => {
@@ -23,7 +23,7 @@ export default function SelectorProductosPills({ seleccionados, onChange }) {
   }, [])
 
   const filtrados = productos.filter(p =>
-    !seleccionados.find(s => s.id === p.id) &&
+    !seleccionados.find(s => s.codigo === p.codigo) &&
     (p.descripcion.toLowerCase().includes(busqueda.toLowerCase()) ||
      (p.codigo || '').toLowerCase().includes(busqueda.toLowerCase()))
   )
@@ -33,8 +33,8 @@ export default function SelectorProductosPills({ seleccionados, onChange }) {
     setBusqueda('')
   }
 
-  const quitar = (id) => {
-    onChange(seleccionados.filter(p => p.id !== id))
+  const quitar = (codigo) => {
+    onChange(seleccionados.filter(p => p.codigo !== codigo))
   }
 
   return (
@@ -87,7 +87,7 @@ export default function SelectorProductosPills({ seleccionados, onChange }) {
             </div>
           ) : filtrados.slice(0, 30).map(p => (
             <div
-              key={p.id}
+              key={p.codigo}
               onClick={() => agregar(p)}
               style={{
                 padding: '8px 12px',
@@ -109,13 +109,13 @@ export default function SelectorProductosPills({ seleccionados, onChange }) {
         <div className="d-flex flex-wrap gap-2 mt-2">
           {seleccionados.map(p => (
             <span
-              key={p.id}
+              key={p.codigo}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: 6,
                 background: 'var(--color-primary)',
-                color: 'var(--color-text-bg)',
+                color: 'white',
                 borderRadius: 8,
                 padding: '4px 10px',
                 fontSize: '0.78rem',
@@ -123,12 +123,12 @@ export default function SelectorProductosPills({ seleccionados, onChange }) {
             >
               {p.descripcion}
               <button
-                onClick={() => quitar(p.id)}
+                onClick={() => quitar(p.codigo)}
                 style={{
                   background: 'none',
                   border: 'none',
                   cursor: 'pointer',
-                  color: 'var(--color-text-bg)',
+                  color: 'rgba(255,255,255,0.8)',
                   display: 'flex',
                   alignItems: 'center',
                   padding: 0,

@@ -1,7 +1,7 @@
 import apiClient from './apiClient'
 
-export const ventaPorProductos = async (productoIds, fechaDesde, fechaHasta) => {
-  const { data } = await apiClient.post('/consultas/venta-productos', { productoIds, fechaDesde, fechaHasta })
+export const ventaPorProductos = async (codigos, fechaDesde, fechaHasta) => {
+  const { data } = await apiClient.post('/consultas/venta-productos', { codigos, fechaDesde, fechaHasta })
   return data
 }
 
@@ -15,8 +15,8 @@ export const getConsultasRapidas = async () => {
   return data
 }
 
-export const crearConsultaRapida = async (titulo, productoIds) => {
-  const { data } = await apiClient.post('/consultas/rapidas', { titulo, productoIds })
+export const crearConsultaRapida = async (titulo, codigos) => {
+  const { data } = await apiClient.post('/consultas/rapidas', { titulo, codigos })
   return data
 }
 

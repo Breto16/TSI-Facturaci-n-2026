@@ -11,7 +11,15 @@ const listar = async () => {
   )
   return rows
 }
-
+const listarParaConsultas = async () => {
+  const { rows } = await pool.query(`
+    SELECT DISTINCT ON (codigo) id, codigo, descripcion, precio, disponible
+    FROM productos
+    WHERE codigo IS NOT NULL AND codigo != ''
+    ORDER BY codigo, disponible DESC, id DESC
+  `)
+  return rows
+}
 const obtenerPorId = async (id) => {
   const { rows } = await pool.query('SELECT * FROM productos WHERE id = $1', [id]);
   return rows[0];
@@ -51,4 +59,4 @@ const registrarCambioPrecio = async (productoId, precioAnterior, precioNuevo) =>
   );
 };
 
-module.exports = { listar, obtenerPorId, crear, actualizar, registrarCambioPrecio };
+module.exports = { listar, listarParaConsultas, obtenerPorId, crear, actualizar, registrarCambioPrecio };

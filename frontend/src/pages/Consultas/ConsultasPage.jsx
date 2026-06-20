@@ -48,21 +48,21 @@ export default function ConsultasPage() {
     setResultado(null)
   }, [tab])
 
-  const ejecutarConsultaProducto = async (productoIds) => {
-    if (productoIds.length === 0) {
-      sileo.warning({ title: 'Sin productos', description: 'Seleccioná al menos un producto' })
-      return
-    }
-    setCargando(true)
-    try {
-      const data = await ventaPorProductos(productoIds, fechaDesde, fechaHasta)
-      setResultado({ tipo: 'producto', ...data })
-    } catch {
-      sileo.error({ title: 'Error', description: 'No se pudo ejecutar la consulta' })
-    } finally {
-      setCargando(false)
-    }
+const ejecutarConsultaProducto = async (codigos) => {
+  if (codigos.length === 0) {
+    sileo.warning({ title: 'Sin productos', description: 'Seleccioná al menos un producto' })
+    return
   }
+  setCargando(true)
+  try {
+    const data = await ventaPorProductos(codigos, fechaDesde, fechaHasta)
+    setResultado({ tipo: 'producto', ...data })
+  } catch {
+    sileo.error({ title: 'Error', description: 'No se pudo ejecutar la consulta' })
+  } finally {
+    setCargando(false)
+  }
+}
 
   const ejecutarConsultaServicio = async () => {
     if (!saloneroId) {
@@ -80,17 +80,17 @@ export default function ConsultasPage() {
     }
   }
 
-  const ejecutarConsultaRapida = async (consulta) => {
-    setCargando(true)
-    try {
-      const data = await ventaPorProductos(consulta.producto_ids, fechaDesde, fechaHasta)
-      setResultado({ tipo: 'producto', ...data })
-    } catch {
-      sileo.error({ title: 'Error', description: 'No se pudo ejecutar la consulta' })
-    } finally {
-      setCargando(false)
-    }
+const ejecutarConsultaRapida = async (consulta) => {
+  setCargando(true)
+  try {
+    const data = await ventaPorProductos(consulta.producto_codigos, fechaDesde, fechaHasta)
+    setResultado({ tipo: 'producto', ...data })
+  } catch {
+    sileo.error({ title: 'Error', description: 'No se pudo ejecutar la consulta' })
+  } finally {
+    setCargando(false)
   }
+}
 
   const handleEliminarRapida = async (id, titulo, e) => {
     e.stopPropagation()
@@ -218,7 +218,7 @@ export default function ConsultasPage() {
                 />
               </div>
               <button
-                onClick={() => ejecutarConsultaProducto(productosSeleccionados.map(p => p.id))}
+                onClick={() => ejecutarConsultaProducto(productosSeleccionados.map(p => p.codigo))}
                 style={{ marginTop: 10, background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: 8, padding: '7px 16px', color: 'var(--color-text-bg)', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}
               >
                 Consultar

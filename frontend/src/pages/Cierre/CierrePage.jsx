@@ -34,7 +34,7 @@ export default function CierrePage() {
 
   useEffect(() => { consultar() }, [consultar])
 
-  
+
   useEffect(() => {
     getConsultasRapidas().then(consultas => {
       setConsultasSeleccionadas(consultas.map(c => c.id))
@@ -48,7 +48,7 @@ export default function CierrePage() {
       for (const id of consultasSeleccionadas) {
         const c = todasConsultas.find(x => x.id === id)
         if (c) {
-          const r = await ventaPorProductos(c.producto_ids, fechaDesde, fechaHasta)
+          const r = await ventaPorProductos(c.producto_codigos, fechaDesde, fechaHasta)
           resultados.push({ titulo: c.titulo, total: r.total })
         }
       }

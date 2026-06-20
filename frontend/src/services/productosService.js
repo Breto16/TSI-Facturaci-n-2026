@@ -19,3 +19,8 @@ export const eliminarProducto = async (id) => {
   const { data } = await apiClient.delete(`/productos/${id}`);
   return data;
 };
+
+export const getProductosParaConsultas = async () => {
+  const { data } = await apiClient.get('/productos/consultas/listar')
+  return data
+}

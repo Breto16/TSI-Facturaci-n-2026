@@ -3,7 +3,7 @@ import { Modal, Form } from 'react-bootstrap'
 import { Sparkles } from 'lucide-react'
 import { sileo } from 'sileo'
 import { GRADIENTS } from '../../../constants/theme'
-import { getProductos } from '../../../services/productosService'
+import { getProductosParaConsultas } from '../../../services/productosService'
 import { crearConsultaRapida } from '../../../services/consultasService'
 
 export default function ConsultaRapidaModal({ show, onHide, onCreada }) {
@@ -16,7 +16,7 @@ export default function ConsultaRapidaModal({ show, onHide, onCreada }) {
 
   useEffect(() => {
     if (show) {
-      getProductos().then(setProductos)
+      getProductosParaConsultas().then(setProductos)
       setTitulo('')
       setSeleccionados([])
       setBusqueda('')
@@ -26,12 +26,11 @@ export default function ConsultaRapidaModal({ show, onHide, onCreada }) {
 
   const toggle = (producto) => {
     setSeleccionados(prev =>
-      prev.find(p => p.id === producto.id)
-        ? prev.filter(p => p.id !== producto.id)
+      prev.find(p => p.codigo === producto.codigo)
+        ? prev.filter(p => p.codigo !== producto.codigo)
         : [...prev, producto]
     )
   }
-
   const filtrados = productos.filter(p =>
     p.descripcion.toLowerCase().includes(busqueda.toLowerCase())
   )
@@ -47,7 +46,7 @@ export default function ConsultaRapidaModal({ show, onHide, onCreada }) {
     }
     setGuardando(true)
     try {
-      await crearConsultaRapida(titulo.trim(), seleccionados.map(p => p.id))
+      await crearConsultaRapida(titulo.trim(), seleccionados.map(p => p.codigo))
       sileo.success({ title: 'Consulta creada', description: `"${titulo.trim()}" fue guardada` })
       onCreada()
       onHide()
@@ -108,11 +107,9 @@ export default function ConsultaRapidaModal({ show, onHide, onCreada }) {
             border: '1px solid var(--color-border)',
           }}>
             {filtrados.map(p => {
-              const checked = !!seleccionados.find(s => s.id === p.id)
+              const checked = !!seleccionados.find(s => s.codigo === p.codigo)
               return (
-                <div
-                  key={p.id}
-                  onClick={() => toggle(p)}
+                <div key={p.codigo} onClick={() => toggle(p)}
                   style={{
                     display: 'flex',
                     alignItems: 'center',

@@ -1,9 +1,9 @@
 const Consulta = require('../models/consulta')
 
 const postVentaProductos = async (req, res) => {
-  const { productoIds, fechaDesde, fechaHasta } = req.body
+  const { codigos, fechaDesde, fechaHasta } = req.body
 
-  if (!productoIds || productoIds.length === 0) {
+  if (!codigos || codigos.length === 0) {
     return res.status(400).json({ msg: 'Seleccioná al menos un producto' })
   }
   if (!fechaDesde || !fechaHasta) {
@@ -11,7 +11,7 @@ const postVentaProductos = async (req, res) => {
   }
 
   try {
-    const resultado = await Consulta.ventaPorProductos(productoIds, fechaDesde, fechaHasta)
+    const resultado = await Consulta.ventaPorProductos(codigos, fechaDesde, fechaHasta)
     res.json(resultado)
   } catch (error) {
     console.log(error)
@@ -49,17 +49,17 @@ const getConsultasRapidas = async (req, res) => {
 }
 
 const postConsultaRapida = async (req, res) => {
-  const { titulo, productoIds } = req.body
+  const { titulo, codigos } = req.body
 
   if (!titulo || !titulo.trim()) {
     return res.status(400).json({ msg: 'El título es obligatorio' })
   }
-  if (!productoIds || productoIds.length === 0) {
+  if (!codigos || codigos.length === 0) {
     return res.status(400).json({ msg: 'Seleccioná al menos un producto' })
   }
 
   try {
-    const consulta = await Consulta.crearConsultaRapida(titulo.trim(), productoIds)
+    const consulta = await Consulta.crearConsultaRapida(titulo.trim(), codigos)
     res.json(consulta)
   } catch (error) {
     console.log(error)

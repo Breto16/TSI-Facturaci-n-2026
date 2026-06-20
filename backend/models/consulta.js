@@ -1,7 +1,7 @@
 const pool = require('../db/connection')
 
-const ventaPorProductos = async (productoIds, fechaDesde, fechaHasta) => {
-    const { rows } = await pool.query(`
+const ventaPorProductos = async (codigos, fechaDesde, fechaHasta) => {
+  const { rows } = await pool.query(`
     SELECT
       fi.factura_id,
       fi.descripcion,
@@ -9,15 +9,16 @@ const ventaPorProductos = async (productoIds, fechaDesde, fechaHasta) => {
       fi.total
     FROM factura_items fi
     JOIN facturas f ON f.id = fi.factura_id
-    WHERE fi.producto_id = ANY($1::int[])
+    JOIN productos p ON p.id = fi.producto_id
+    WHERE p.codigo = ANY($1::text[])
       AND f.estado = 'pagada'
       AND f.fecha_apertura >= $2
       AND f.fecha_apertura <= $3
     ORDER BY fi.factura_id ASC
-  `, [productoIds, fechaDesde, fechaHasta + ' 23:59:59'])
+  `, [codigos, fechaDesde, fechaHasta + ' 23:59:59'])
 
-    const total = rows.reduce((acc, r) => acc + Number(r.total), 0)
-    return { rows, total }
+  const total = rows.reduce((acc, r) => acc + Number(r.total), 0)
+  return { rows, total }
 }
 
 const servicioPorSalonero = async (saloneroId, fechaDesde, fechaHasta) => {
@@ -35,19 +36,20 @@ const servicioPorSalonero = async (saloneroId, fechaDesde, fechaHasta) => {
     return { rows, total }
 }
 
-const listarConsultasRapidas = async () => {
-    const { rows } = await pool.query(
-        'SELECT id, titulo, producto_ids FROM consultas_rapidas ORDER BY titulo ASC'
-    )
-    return rows
+
+const crearConsultaRapida = async (titulo, codigos) => {
+  const { rows } = await pool.query(
+    `INSERT INTO consultas_rapidas (titulo, producto_codigos) VALUES ($1, $2) RETURNING *`,
+    [titulo, codigos]
+  )
+  return rows[0]
 }
 
-const crearConsultaRapida = async (titulo, productoIds) => {
-    const { rows } = await pool.query(
-        `INSERT INTO consultas_rapidas (titulo, producto_ids) VALUES ($1, $2) RETURNING *`,
-        [titulo, productoIds]
-    )
-    return rows[0]
+const listarConsultasRapidas = async () => {
+  const { rows } = await pool.query(
+    'SELECT id, titulo, producto_codigos FROM consultas_rapidas ORDER BY titulo ASC'
+  )
+  return rows
 }
 
 const eliminarConsultaRapida = async (id) => {

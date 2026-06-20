@@ -27,6 +27,7 @@ const getProducto = async (req, res) => {
   }
 };
 
+
 const postProducto = async (req, res) => {
   const { codigo, descripcion, precio, prioridad, categoria } = req.body;
 
@@ -88,4 +89,14 @@ const deleteProducto = async (req, res) => {
   }
 };
 
-module.exports = { getProductos, getProducto, postProducto, putProducto, deleteProducto };
+const getProductosParaConsultas = async (req, res) => {
+  try {
+    const productos = await Producto.listarParaConsultas()
+    res.json(productos)
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ msg: 'Error en el servidor' })
+  }
+}
+
+module.exports = { getProductos, getProducto, postProducto, putProducto, deleteProducto, getProductosParaConsultas };
