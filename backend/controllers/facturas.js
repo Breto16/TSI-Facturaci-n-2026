@@ -121,7 +121,7 @@ const postItem = async (req, res) => {
   const { id } = req.params
   const { producto_id, descripcion, precio_unitario, cantidad } = req.body
   try {
-    const item = await FacturaItem.agregar({
+    const item = await FacturaItem.agregarOIncrementar({
       factura_id: id, producto_id, descripcion, precio_unitario, cantidad
     })
     await Factura.recalcularTotales(id)
@@ -206,12 +206,22 @@ const moverItems = async (req, res) => {
     res.status(500).json({ msg: error.message || 'Error en el servidor' })
   }
 }
-
+const putTruchasPendientes = async (req, res) => {
+  const { id } = req.params
+  const { cantidad } = req.body
+  try {
+    const factura = await Factura.actualizarTruchasPendientes(id, cantidad)
+    res.json(factura)
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ msg: 'Error en el servidor' })
+  }
+}
 module.exports = {
   getFacturasPorMesa, postFactura, getFactura, getFacturas,
   putFacturaEncabezado, putFacturaEstado, putTotales,
   getItems, postItem, putItem, deleteItem,
-  postHija, getHijas, moverItems
+  postHija, getHijas, moverItems, putTruchasPendientes
 }
 
 

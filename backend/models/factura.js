@@ -267,9 +267,15 @@ const moverItemsTransaccion = async (facturaOrigenId, facturaDestinoId, tipo, it
     client.release()
   }
 }
-
+const actualizarTruchasPendientes = async (id, cantidad) => {
+  const { rows } = await pool.query(
+    `UPDATE facturas SET truchas_pendientes_cocina = $1 WHERE id = $2 RETURNING *`,
+    [cantidad, id]
+  )
+  return rows[0]
+}
 module.exports = {
   listarPorMesa, crear, obtenerPorId, listarPaginado,
   actualizarEncabezado, actualizarEstado, recalcularTotales,
-  crearHija, listarHijas, moverItemsTransaccion
+  crearHija, listarHijas, moverItemsTransaccion, actualizarTruchasPendientes
 }

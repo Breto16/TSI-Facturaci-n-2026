@@ -11,6 +11,7 @@ const facturasRoutes = require('./routes/facturas')
 const salonerosRoutes = require('./routes/saloneros')
 const impresionRoutes = require('./routes/impresion')
 const consultasRoutes = require('./routes/consultas')
+const configuracionRoutes = require('./routes/configuracion')
 
 
 const app = express();
@@ -39,6 +40,7 @@ app.use('/api/facturas', facturasRoutes)
 app.use('/api/saloneros', salonerosRoutes)
 app.use('/api/imprimir', impresionRoutes)
 app.use('/api/consultas', consultasRoutes)
+app.use('/api/configuracion', configuracionRoutes)
 
 pool.query('SELECT NOW()')
   .then(() => console.log('BD CONECTADA'))

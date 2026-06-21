@@ -73,3 +73,7 @@ export const actualizarDetalle = async (facturaId, detalle) => {
   const { data } = await apiClient.put(`/facturas/${facturaId}/encabezado`, { detalle })
   return data
 }
+export const actualizarTruchasPendientes = async (facturaId, cantidad) => {
+  const { data } = await apiClient.put(`/facturas/${facturaId}/truchas-pendientes`, { cantidad })
+  return data
+}

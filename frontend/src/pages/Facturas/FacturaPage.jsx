@@ -12,7 +12,7 @@ import BotonesMover from './components/BotonesMover'
 import { imprimirFactura, abrirCaja } from '../../services/impresionService'
 import {
   getFactura, getItems, agregarItem, actualizarItem,
-  eliminarItem, actualizarEncabezado, actualizarEstado,
+  eliminarItem, actualizarEncabezado, actualizarEstado, actualizarTruchasPendientes,
   actualizarTotales, getHijas, moverItems as moverItemsService
 } from '../../services/facturasService'
 import { getSaloneros } from '../../services/salonerosService'
@@ -106,6 +106,7 @@ export default function FacturaPage() {
         getPrecioTruchaVigente(),
       ])
       setFactura(f)
+      setTruchasPendientes(f.truchas_pendientes_cocina || 0)
       setItems(its)
       setSaloneros(sals)
       setMesas(mess)
@@ -140,6 +141,15 @@ export default function FacturaPage() {
       setItemsHija([])
     }
   }, [hijaSeleccionada])
+  useEffect(() => {
+    if (cargando || !factura) return
+    const timeout = setTimeout(() => {
+      actualizarTruchasPendientes(id, truchasPendientes).catch(() => { })
+    }, 600)
+    return () => clearTimeout(timeout)
+  }, [truchasPendientes])
+
+  const totalUnidades = items.reduce((acc, i) => acc + i.cantidad, 0)
 
   const recargarFactura = useCallback(async (desc = descuento, servicio = cobrarServicio) => {
     const montoDescuento = factura?.subtotal
@@ -177,7 +187,7 @@ export default function FacturaPage() {
 
     return () => clearTimeout(timeout)
   }, [mostrarTrucha, gramosTrucha])
-  const refrescarDivision = async (hijaId) => {
+  const refrescarDivision = async (hijaId, resetearSeleccion = true) => {
     const [hijasActualizadas, itemsPadreActualizados] = await Promise.all([
       getHijas(id),
       getItems(id),
@@ -197,8 +207,10 @@ export default function FacturaPage() {
       }
     }
 
-    setItemPadreSeleccionado(null)
-    setItemHijaSeleccionado(null)
+    if (resetearSeleccion) {
+      setItemPadreSeleccionado(null)
+      setItemHijaSeleccionado(null)
+    }
   }
 
   const handleMover = async (tipo) => {
@@ -216,35 +228,63 @@ export default function FacturaPage() {
         return
       }
       try {
+        const itemMovidoId = itemPadreSeleccionado?.id
+        const itemMovidoProductoId = itemPadreSeleccionado?.producto_id
+        const cantidadOriginal = itemPadreSeleccionado?.cantidad
+
         await moverItemsService(id, {
           tipo: tipoMovimiento,
-          itemId: itemPadreSeleccionado?.id,
+          itemId: itemMovidoId,
           facturaDestinoId: hijaSeleccionada.id,
         })
         sileo.success({ title: 'Item movido', description: 'Movido a la cuenta hija' })
-        await refrescarDivision(hijaSeleccionada.id)
+
+        const itemsPadreActualizados = await getItems(id)
+
+        // Si se movió "uno" y quedó remanente del mismo producto en el padre, re-seleccionarlo
+        if (tipoMovimiento === 'uno' && cantidadOriginal > 1) {
+          const remanente = itemsPadreActualizados.find(i => i.producto_id === itemMovidoProductoId)
+          setItemPadreSeleccionado(remanente || null)
+        } else {
+          setItemPadreSeleccionado(null)
+        }
+
+        await refrescarDivision(hijaSeleccionada.id, false)
       } catch {
         sileo.error({ title: 'Error', description: 'No se pudo mover el item' })
       }
     } else {
+      // ... (sección izquierda igual, pero aplicamos la misma lógica para itemHijaSeleccionado)
       if (tipoMovimiento !== 'todo' && !itemHijaSeleccionado) {
         sileo.warning({ title: 'Sin item seleccionado', description: 'Seleccioná un item de la hija para regresar' })
         return
       }
       try {
+        const itemMovidoProductoId = itemHijaSeleccionado?.producto_id
+        const cantidadOriginal = itemHijaSeleccionado?.cantidad
+
         await moverItemsService(hijaSeleccionada.id, {
           tipo: tipoMovimiento,
           itemId: itemHijaSeleccionado?.id,
           facturaDestinoId: id,
         })
         sileo.success({ title: 'Item regresado', description: 'Regresado a la cuenta padre' })
-        await refrescarDivision(hijaSeleccionada.id)
+
+        const itemsHijaActualizados = await getItems(hijaSeleccionada.id)
+
+        if (tipoMovimiento === 'uno' && cantidadOriginal > 1) {
+          const remanente = itemsHijaActualizados.find(i => i.producto_id === itemMovidoProductoId)
+          setItemHijaSeleccionado(remanente || null)
+        } else {
+          setItemHijaSeleccionado(null)
+        }
+
+        await refrescarDivision(hijaSeleccionada.id, false)
       } catch {
         sileo.error({ title: 'Error', description: 'No se pudo regresar el item' })
       }
     }
   }
-
   const handleToggleServicio = async () => {
     const nuevo = !cobrarServicio
     setCobrarServicio(nuevo)
@@ -522,13 +562,25 @@ export default function FacturaPage() {
           {/* Sección de cálculos y alertas solo si es editable */}
           {editable && (
             <>
-              {truchasPendientes > 0 && (
-                <div style={{ padding: '6px 12px', background: '#fef3c7', border: '1px solid #fde68a', borderRadius: 8, flexShrink: 0 }}>
-                  <span style={{ fontSize: '0.8rem', color: '#92400e', fontWeight: 600 }}>
-                    {truchasPendientes} trucha{truchasPendientes !== 1 ? 's' : ''} pendiente{truchasPendientes !== 1 ? 's' : ''} de cocina
+              <div style={{
+                display: 'flex',
+                gap: 8,
+                flexShrink: 0,
+              }}>
+                <div style={{ padding: '6px 12px', background: 'var(--color-background)', border: '1px solid var(--color-border)', borderRadius: 8 }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--color-text-secondary)', fontWeight: 600 }}>
+                    Total items: {totalUnidades}
                   </span>
                 </div>
-              )}
+                {truchasPendientes > 0 && (
+                  <div style={{ flex: 1, padding: '6px 12px', background: '#fef3c7', border: '1px solid #fde68a', borderRadius: 8 }}>
+                    <span style={{ fontSize: '0.8rem', color: '#92400e', fontWeight: 600 }}>
+                      {truchasPendientes} trucha{truchasPendientes !== 1 ? 's' : ''} pendiente{truchasPendientes !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                )}
+
+              </div>
 
               <div style={{ borderRadius: 12, border: '1px solid var(--color-border)', padding: '12px 16px', flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {editable && (

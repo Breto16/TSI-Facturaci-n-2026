@@ -3,7 +3,7 @@ const {
   getFacturasPorMesa, postFactura, getFactura, getFacturas,
   putFacturaEncabezado, putFacturaEstado, putTotales,
   getItems, postItem, putItem, deleteItem,
-  postHija, getHijas, moverItems
+  postHija, getHijas, moverItems, putTruchasPendientes
 } = require('../controllers/facturas')
 const { validarJWT } = require('../middlewares/validarJWT')
 
@@ -24,7 +24,7 @@ router.delete('/:id/items/:itemId', deleteItem)
 router.get('/:id/hijas', getHijas)
 router.post('/:id/hijas', postHija)
 router.post('/:id/mover', moverItems)
-
+router.put('/:id/truchas-pendientes', putTruchasPendientes)
 
 
 module.exports = router

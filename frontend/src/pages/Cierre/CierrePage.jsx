@@ -7,6 +7,8 @@ import { GRADIENTS } from '../../constants/theme'
 import ModalRealizarCierre from './components/ModalRealizarCierre'
 import ModalConfigurarCierre from './components/ModalConfigurarCierre'
 import { getCierre, ventaPorProductos, getConsultasRapidas } from '../../services/consultasService'
+import ModalPasswordCierre from './components/ModalPasswordCierre'
+import { cambiarCierrePassword } from '../../services/configuracionService'
 
 const hoy = () => new Date().toISOString().split('T')[0]
 
@@ -17,8 +19,12 @@ export default function CierrePage() {
   const [cargando, setCargando] = useState(false)
   const [modalCierre, setModalCierre] = useState(false)
   const [modalConfig, setModalConfig] = useState(false)
+  const [desbloqueado, setDesbloqueado] = useState(false)
   const [consultasSeleccionadas, setConsultasSeleccionadas] = useState([])
   const [consultasResultados, setConsultasResultados] = useState([])
+  const [passwordActual, setPasswordActual] = useState('')
+  const [passwordNueva, setPasswordNueva] = useState('')
+  const [cambiandoPassword, setCambiandoPassword] = useState(false)
 
   const consultar = useCallback(async () => {
     setCargando(true)
@@ -34,7 +40,19 @@ export default function CierrePage() {
 
   useEffect(() => { consultar() }, [consultar])
 
-
+  const handleCambiarPassword = async () => {
+    setCambiandoPassword(true)
+    try {
+      await cambiarCierrePassword(passwordActual, passwordNueva)
+      sileo.success({ title: 'Contraseña actualizada', description: 'La contraseña de cierre fue cambiada' })
+      setPasswordActual('')
+      setPasswordNueva('')
+    } catch (err) {
+      sileo.error({ title: 'Error', description: err.response?.data?.msg || 'No se pudo cambiar la contraseña' })
+    } finally {
+      setCambiandoPassword(false)
+    }
+  }
   useEffect(() => {
     getConsultasRapidas().then(consultas => {
       setConsultasSeleccionadas(consultas.map(c => c.id))
@@ -61,8 +79,11 @@ export default function CierrePage() {
 
   const totales = datos?.totales
   const servicios = datos?.servicios || []
-
+  if (!desbloqueado) {
+    return <ModalPasswordCierre show={true} onValidado={() => setDesbloqueado(true)} />
+  }
   return (
+
     <PageWrapper>
       <div className="d-flex align-items-center justify-content-between mb-4">
         <div className="d-flex align-items-center gap-2">
@@ -176,6 +197,40 @@ export default function CierrePage() {
         seleccionadas={consultasSeleccionadas}
         onChange={setConsultasSeleccionadas}
       />
+      <div style={{ marginTop: 24, borderRadius: 16, border: '1px solid var(--color-border)', padding: '1.25rem 1.5rem' }}>
+        <span className="fw-semibold small" style={{ color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: 1 }}>
+          Cambiar contraseña de acceso
+        </span>
+        <div className="row g-2 mt-1">
+          <div className="col-12 col-md-4">
+            <input
+              type="password"
+              placeholder="Contraseña actual"
+              value={passwordActual}
+              onChange={e => setPasswordActual(e.target.value)}
+              style={{ width: '100%', padding: '7px 10px', borderRadius: 8, border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '0.85rem' }}
+            />
+          </div>
+          <div className="col-12 col-md-4">
+            <input
+              type="password"
+              placeholder="Contraseña nueva"
+              value={passwordNueva}
+              onChange={e => setPasswordNueva(e.target.value)}
+              style={{ width: '100%', padding: '7px 10px', borderRadius: 8, border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '0.85rem' }}
+            />
+          </div>
+          <div className="col-12 col-md-4">
+            <button
+              onClick={handleCambiarPassword}
+              disabled={cambiandoPassword || !passwordActual || !passwordNueva}
+              style={{ width: '100%', background: 'var(--color-primary)', border: 'none', borderRadius: 8, padding: '7px', color: 'white', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', opacity: (cambiandoPassword || !passwordActual || !passwordNueva) ? 0.6 : 1 }}
+            >
+              {cambiandoPassword ? 'Cambiando...' : 'Cambiar'}
+            </button>
+          </div>
+        </div>
+      </div>
     </PageWrapper>
   )
 }

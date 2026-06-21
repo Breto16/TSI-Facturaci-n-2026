@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Container, Spinner } from 'react-bootstrap'
+import { Container, Spinner, Modal } from 'react-bootstrap'
 import { BarChart2, Package, Percent, Plus, Trash2 } from 'lucide-react'
 import { sileo } from 'sileo'
 import PageWrapper from '../../components/layout/PageWrapper'
@@ -92,18 +92,25 @@ export default function ConsultasPage() {
     }
   }
 
-  const handleEliminarRapida = async (id, titulo, e) => {
-    e.stopPropagation()
-    if (!window.confirm(`¿Eliminar la consulta "${titulo}"?`)) return
-    try {
-      await eliminarConsultaRapida(id)
-      sileo.info({ title: 'Eliminada', description: `"${titulo}" fue eliminada` })
-      cargarConsultasRapidas()
-      if (tab === `rapida_${id}`) setTab('producto')
-    } catch {
-      sileo.error({ title: 'Error', description: 'No se pudo eliminar' })
-    }
+const [modalEliminar, setModalEliminar] = useState({ show: false, id: null, titulo: '' })
+
+const handleEliminarRapida = (id, titulo, e) => {
+  e.stopPropagation()
+  setModalEliminar({ show: true, id, titulo })
+}
+
+const confirmarEliminar = async () => {
+  try {
+    await eliminarConsultaRapida(modalEliminar.id)
+    sileo.info({ title: 'Eliminada', description: `"${modalEliminar.titulo}" fue eliminada` })
+    cargarConsultasRapidas()
+    if (tab === `rapida_${modalEliminar.id}`) setTab('producto')
+  } catch {
+    sileo.error({ title: 'Error', description: 'No se pudo eliminar' })
+  } finally {
+    setModalEliminar({ show: false, id: null, titulo: '' })
   }
+}
 
   const TABS_BASE = [
     { key: 'producto', label: 'Venta de producto', icono: Package },
@@ -348,6 +355,26 @@ export default function ConsultasPage() {
         onHide={() => setModalRapida(false)}
         onCreada={cargarConsultasRapidas}
       />
+      <Modal show={modalEliminar.show} onHide={() => setModalEliminar({ show: false, id: null, titulo: '' })} centered animation={false} contentClassName="border-0 bg-transparent">
+        <div style={{ borderRadius: 16, overflow: 'hidden' }}>
+          <div style={{ background: GRADIENTS.rojo, padding: '1.25rem 1.5rem' }}>
+            <span className="fw-bold text-white fs-5">Eliminar consulta</span>
+          </div>
+          <div style={{ background: 'var(--color-surface)', padding: '1.5rem' }}>
+            <p style={{ color: 'var(--color-text)', marginBottom: '1.5rem' }}>
+              ¿Eliminar la consulta "{modalEliminar.titulo}"?
+            </p>
+            <div className="d-flex justify-content-end gap-2">
+              <button onClick={() => setModalEliminar({ show: false, id: null, titulo: '' })} style={{ background: 'transparent', border: '1px solid var(--color-btn-secondary-border)', borderRadius: 8, padding: '7px 16px', fontSize: '0.875rem', cursor: 'pointer', color: 'var(--color-btn-secondary-text)' }}>
+                Cancelar
+              </button>
+              <button onClick={confirmarEliminar} style={{ background: 'transparent', border: '1px solid var(--color-danger)', borderRadius: 8, padding: '7px 16px', fontSize: '0.875rem', cursor: 'pointer', color: 'var(--color-danger)' }}>
+                Sí, eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      </Modal>
     </PageWrapper>
   )
 }
