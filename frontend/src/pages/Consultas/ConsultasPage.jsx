@@ -7,11 +7,12 @@ import { GRADIENTS } from '../../constants/theme'
 import SelectorProductosPills from './components/SelectorProductosPills'
 import ConsultaRapidaModal from './components/ConsultaRapidaModal'
 import {
-  ventaPorProductos, servicioPorSalonero,
-  getConsultasRapidas, eliminarConsultaRapida
+  ventaPorProductos,
+  servicioPorSalonero,
+  getConsultasRapidas,
+  eliminarConsultaRapida,
 } from '../../services/consultasService'
 import { getSaloneros } from '../../services/salonerosService'
-import { getProductos } from '../../services/productosService'
 
 const hoy = () => new Date().toISOString().split('T')[0]
 
@@ -19,6 +20,7 @@ export default function ConsultasPage() {
   const [tab, setTab] = useState('producto')
   const [consultasRapidas, setConsultasRapidas] = useState([])
   const [modalRapida, setModalRapida] = useState(false)
+  const [modalEliminar, setModalEliminar] = useState({ show: false, id: null, titulo: '' })
 
   const [fechaDesde, setFechaDesde] = useState(hoy())
   const [fechaHasta, setFechaHasta] = useState(hoy())
@@ -35,7 +37,7 @@ export default function ConsultasPage() {
       const data = await getConsultasRapidas()
       setConsultasRapidas(data)
     } catch {
-      sileo.error({ title: 'Error', description: 'No se pudieron cargar las consultas rápidas' })
+      sileo.error({ title: 'Error', description: 'No se pudieron cargar las consultas rapidas' })
     }
   }, [])
 
@@ -50,13 +52,13 @@ export default function ConsultasPage() {
 
   const ejecutarConsultaProducto = async (codigos) => {
     if (codigos.length === 0) {
-      sileo.warning({ title: 'Sin productos', description: 'Seleccioná al menos un producto' })
+      sileo.warning({ title: 'Sin productos', description: 'Selecciona al menos un producto' })
       return
     }
     setCargando(true)
     try {
       const data = await ventaPorProductos(codigos, fechaDesde, fechaHasta)
-      setResultado({ tipo: 'producto', ...data })
+      setResultado({ tipo: 'producto', ...data, cantidadItems: data.rows.length })
     } catch {
       sileo.error({ title: 'Error', description: 'No se pudo ejecutar la consulta' })
     } finally {
@@ -66,13 +68,13 @@ export default function ConsultasPage() {
 
   const ejecutarConsultaServicio = async () => {
     if (!saloneroId) {
-      sileo.warning({ title: 'Sin salonero', description: 'Seleccioná un salonero' })
+      sileo.warning({ title: 'Sin salonero', description: 'Selecciona un salonero' })
       return
     }
     setCargando(true)
     try {
       const data = await servicioPorSalonero(saloneroId, fechaDesde, fechaHasta)
-      setResultado({ tipo: 'servicio', ...data })
+      setResultado({ tipo: 'servicio', ...data, cantidadItems: data.rows.length })
     } catch {
       sileo.error({ title: 'Error', description: 'No se pudo ejecutar la consulta' })
     } finally {
@@ -84,7 +86,7 @@ export default function ConsultasPage() {
     setCargando(true)
     try {
       const data = await ventaPorProductos(consulta.producto_codigos, fechaDesde, fechaHasta)
-      setResultado({ tipo: 'producto', ...data })
+      setResultado({ tipo: 'producto', ...data, cantidadItems: data.rows.length })
     } catch {
       sileo.error({ title: 'Error', description: 'No se pudo ejecutar la consulta' })
     } finally {
@@ -92,25 +94,23 @@ export default function ConsultasPage() {
     }
   }
 
-const [modalEliminar, setModalEliminar] = useState({ show: false, id: null, titulo: '' })
-
-const handleEliminarRapida = (id, titulo, e) => {
-  e.stopPropagation()
-  setModalEliminar({ show: true, id, titulo })
-}
-
-const confirmarEliminar = async () => {
-  try {
-    await eliminarConsultaRapida(modalEliminar.id)
-    sileo.info({ title: 'Eliminada', description: `"${modalEliminar.titulo}" fue eliminada` })
-    cargarConsultasRapidas()
-    if (tab === `rapida_${modalEliminar.id}`) setTab('producto')
-  } catch {
-    sileo.error({ title: 'Error', description: 'No se pudo eliminar' })
-  } finally {
-    setModalEliminar({ show: false, id: null, titulo: '' })
+  const handleEliminarRapida = (id, titulo, e) => {
+    e.stopPropagation()
+    setModalEliminar({ show: true, id, titulo })
   }
-}
+
+  const confirmarEliminar = async () => {
+    try {
+      await eliminarConsultaRapida(modalEliminar.id)
+      sileo.info({ title: 'Eliminada', description: `"${modalEliminar.titulo}" fue eliminada` })
+      cargarConsultasRapidas()
+      if (tab === `rapida_${modalEliminar.id}`) setTab('producto')
+    } catch {
+      sileo.error({ title: 'Error', description: 'No se pudo eliminar' })
+    } finally {
+      setModalEliminar({ show: false, id: null, titulo: '' })
+    }
+  }
 
   const TABS_BASE = [
     { key: 'producto', label: 'Venta de producto', icono: Package },
@@ -124,7 +124,7 @@ const confirmarEliminar = async () => {
           <BarChart2 size={40} color="var(--color-primary)" />
           <div className="ms-2">
             <h4 className="mb-0 fw-semibold" style={{ color: 'var(--color-text)' }}>Consultas</h4>
-            <small style={{ color: 'var(--color-text-secondary)' }}>Reportes rápidos del sistema</small>
+            <small style={{ color: 'var(--color-text-secondary)' }}>Reportes rapidos del sistema</small>
           </div>
         </div>
       </div>
@@ -143,7 +143,7 @@ const confirmarEliminar = async () => {
                 padding: '7px 14px', borderRadius: 20,
                 border: `1px solid ${activo ? 'var(--color-primary)' : 'var(--color-border)'}`,
                 background: activo ? 'var(--color-primary)' : 'var(--color-surface)',
-                color: activo ? 'var(--color-text-bg)' : 'var(--color-text)',
+                color: activo ? 'white' : 'var(--color-text)',
                 fontSize: '0.82rem', fontWeight: 500, cursor: 'pointer',
               }}
             >
@@ -164,7 +164,7 @@ const confirmarEliminar = async () => {
                 padding: '7px 10px 7px 14px', borderRadius: 20,
                 border: `1px solid ${activo ? 'var(--color-primary)' : 'var(--color-border)'}`,
                 background: activo ? 'var(--color-primary)' : 'var(--color-surface)',
-                color: activo ? 'var(--color-text-bg)' : 'var(--color-text)',
+                color: activo ? 'white' : 'var(--color-text)',
                 fontSize: '0.82rem', fontWeight: 500, cursor: 'pointer',
               }}
             >
@@ -193,9 +193,9 @@ const confirmarEliminar = async () => {
         </button>
       </div>
 
-      {/* Card de filtros + resultados */}
+      {/* Card de filtros y resultados */}
       <div style={{ borderRadius: 16, overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }}>
-        <div style={{ background: "var(--color-primary)", padding: '1.25rem 1.5rem' }}>
+        <div style={{ background: 'var(--color-primary)', padding: '1.25rem 1.5rem' }}>
 
           <div className="row g-2 mb-3">
             <div className="col-6 col-md-3">
@@ -257,8 +257,8 @@ const confirmarEliminar = async () => {
           {tab.startsWith('rapida_') && (
             <button
               onClick={() => {
-                const id = parseInt(tab.replace('rapida_', ''))
-                const consulta = consultasRapidas.find(c => c.id === id)
+                const rid = parseInt(tab.replace('rapida_', ''))
+                const consulta = consultasRapidas.find(c => c.id === rid)
                 if (consulta) ejecutarConsultaRapida(consulta)
               }}
               style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: 8, padding: '7px 16px', color: 'var(--color-text-bg)', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}
@@ -276,7 +276,7 @@ const confirmarEliminar = async () => {
             </div>
           ) : !resultado ? (
             <div className="text-center py-5" style={{ color: 'var(--color-text-secondary)' }}>
-              Configurá los filtros y presioná Consultar
+              Configura los filtros y presiona Consultar
             </div>
           ) : (
             <>
@@ -286,16 +286,16 @@ const confirmarEliminar = async () => {
                     <tr style={{ borderBottom: '2px solid var(--color-border)' }}>
                       {resultado.tipo === 'producto' ? (
                         <>
-                          <th style={{ padding: '8px 16px', color: 'var(--color-text-secondary)' }}>Factura #</th>
-                          <th style={{ padding: '8px 16px', color: 'var(--color-text-secondary)' }}>Producto</th>
-                          <th style={{ padding: '8px 16px', color: 'var(--color-text-secondary)', textAlign: 'center' }}>Cantidad</th>
-                          <th style={{ padding: '8px 16px', color: 'var(--color-text-secondary)', textAlign: 'right' }}>Total</th>
+                          <th style={{ padding: '8px 16px', color: 'var(--color-text-secondary)', backgroundColor: 'var(--color-surface)' }}>Factura #</th>
+                          <th style={{ padding: '8px 16px', color: 'var(--color-text-secondary)', backgroundColor: 'var(--color-surface)' }}>Producto</th>
+                          <th style={{ padding: '8px 16px', color: 'var(--color-text-secondary)', textAlign: 'center', backgroundColor: 'var(--color-surface)' }}>Cantidad</th>
+                          <th style={{ padding: '8px 16px', color: 'var(--color-text-secondary)', textAlign: 'right', backgroundColor: 'var(--color-surface)' }}>Total</th>
                         </>
                       ) : (
                         <>
-                          <th style={{ padding: '8px 16px', color: 'var(--color-text-secondary)' }}>Factura #</th>
-                          <th style={{ padding: '8px 16px', color: 'var(--color-text-secondary)' }}>Fecha</th>
-                          <th style={{ padding: '8px 16px', color: 'var(--color-text-secondary)', textAlign: 'right' }}>Servicio 10%</th>
+                          <th style={{ padding: '8px 16px', color: 'var(--color-text-secondary)', backgroundColor: 'var(--color-surface)' }}>Factura #</th>
+                          <th style={{ padding: '8px 16px', color: 'var(--color-text-secondary)', backgroundColor: 'var(--color-surface)' }}>Fecha</th>
+                          <th style={{ padding: '8px 16px', color: 'var(--color-text-secondary)', textAlign: 'right', backgroundColor: 'var(--color-surface)' }}>Servicio 10%</th>
                         </>
                       )}
                     </tr>
@@ -308,7 +308,7 @@ const confirmarEliminar = async () => {
                         </td>
                       </tr>
                     ) : resultado.rows.map((r, i) => (
-                      <tr key={i} style={{ borderBottom: '1px solid var(--color-border)', color: 'var(--color-text)' }}>
+                      <tr key={i} style={{ borderBottom: '1px solid var(--color-border)', color: 'var(--color-text)', backgroundColor: 'var(--color-surface)' }}>
                         {resultado.tipo === 'producto' ? (
                           <>
                             <td style={{ padding: '7px 16px' }}>#{r.factura_id}</td>
@@ -331,7 +331,7 @@ const confirmarEliminar = async () => {
                 </table>
               </div>
 
-              {/* Total fijo abajo */}
+              {/* Total fijo */}
               <div style={{
                 padding: '14px 20px',
                 borderTop: '2px solid var(--color-border)',
@@ -340,7 +340,12 @@ const confirmarEliminar = async () => {
                 alignItems: 'center',
                 backgroundColor: 'var(--color-background)',
               }}>
-                <span style={{ fontWeight: 700, color: 'var(--color-text)' }}>Total</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <span style={{ fontWeight: 700, color: 'var(--color-text)' }}>Total</span>
+                  <span style={{ fontSize: '0.78rem', color: 'var(--color-primary)' }}>
+                    {resultado.cantidadItems} resultado{resultado.cantidadItems !== 1 ? 's' : ''}
+                  </span>
+                </div>
                 <span style={{ fontWeight: 800, fontSize: '1.3rem', color: 'var(--color-primary)' }}>
                   ₡{Number(resultado.total).toLocaleString('es-CR')}
                 </span>
@@ -355,21 +360,31 @@ const confirmarEliminar = async () => {
         onHide={() => setModalRapida(false)}
         onCreada={cargarConsultasRapidas}
       />
+
       <Modal show={modalEliminar.show} onHide={() => setModalEliminar({ show: false, id: null, titulo: '' })} centered animation={false} contentClassName="border-0 bg-transparent">
         <div style={{ borderRadius: 16, overflow: 'hidden' }}>
-          <div style={{ background: GRADIENTS.rojo, padding: '1.25rem 1.5rem' }}>
-            <span className="fw-bold text-white fs-5">Eliminar consulta</span>
+          <div style={{ background: 'var(--color-danger)', padding: '1.25rem 1.5rem' }}>
+            <div className="d-flex align-items-center justify-content-between">
+              <span className="fw-bold text-white fs-5">Eliminar consulta</span>
+              <button onClick={() => setModalEliminar({ show: false, id: null, titulo: '' })} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>X</button>
+            </div>
           </div>
           <div style={{ background: 'var(--color-surface)', padding: '1.5rem' }}>
             <p style={{ color: 'var(--color-text)', marginBottom: '1.5rem' }}>
-              ¿Eliminar la consulta "{modalEliminar.titulo}"?
+              Eliminar la consulta "{modalEliminar.titulo}"?
             </p>
             <div className="d-flex justify-content-end gap-2">
-              <button onClick={() => setModalEliminar({ show: false, id: null, titulo: '' })} style={{ background: 'transparent', border: '1px solid var(--color-btn-secondary-border)', borderRadius: 8, padding: '7px 16px', fontSize: '0.875rem', cursor: 'pointer', color: 'var(--color-btn-secondary-text)' }}>
+              <button
+                onClick={() => setModalEliminar({ show: false, id: null, titulo: '' })}
+                style={{ background: 'var(--color-background)', border: '1px solid var(--color-btn-secondary-border)', borderRadius: 8, padding: '7px 16px', fontSize: '0.875rem', cursor: 'pointer', color: 'var(--color-btn-secondary-text)' }}
+              >
                 Cancelar
               </button>
-              <button onClick={confirmarEliminar} style={{ background: 'transparent', border: '1px solid var(--color-danger)', borderRadius: 8, padding: '7px 16px', fontSize: '0.875rem', cursor: 'pointer', color: 'var(--color-danger)' }}>
-                Sí, eliminar
+              <button
+                onClick={confirmarEliminar}
+                style={{ background: 'var(--color-danger)', border: 'none', borderRadius: 8, padding: '7px 16px', fontSize: '0.875rem', cursor: 'pointer', color: 'white', fontWeight: 600 }}
+              >
+                Si, eliminar
               </button>
             </div>
           </div>
