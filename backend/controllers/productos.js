@@ -27,16 +27,15 @@ const getProducto = async (req, res) => {
   }
 };
 
-
 const postProducto = async (req, res) => {
-  const { codigo, descripcion, precio, prioridad, categoria } = req.body;
+  const { codigo, descripcion, precio, prioridad, categoria, requiereAcompanamiento, tieneVariantes, requiereFicha } = req.body;
 
   if (!descripcion || precio == null) {
     return res.status(400).json({ msg: 'Descripción y precio son obligatorios' });
   }
 
   try {
-    const nuevo = await Producto.crear({ codigo, descripcion, precio, prioridad, categoria });
+    const nuevo = await Producto.crear({ codigo, descripcion, precio, prioridad, categoria, requiereAcompanamiento, tieneVariantes, requiereFicha });
     res.json(nuevo);
   } catch (error) {
     console.log(error);
@@ -46,7 +45,7 @@ const postProducto = async (req, res) => {
 
 const putProducto = async (req, res) => {
   const { id } = req.params;
-  const { codigo, descripcion, precio, prioridad, categoria, disponible } = req.body;
+  const { codigo, descripcion, precio, prioridad, categoria, disponible, requiereAcompanamiento, tieneVariantes, requiereFicha } = req.body;
 
   try {
     const productoActual = await Producto.obtenerPorId(id);
@@ -55,13 +54,12 @@ const putProducto = async (req, res) => {
       return res.status(404).json({ msg: 'Producto no existe' });
     }
 
-    // Si el precio cambia, registrar histórico antes de actualizar
     if (precio != null && Number(precio) !== Number(productoActual.precio)) {
       await Producto.registrarCambioPrecio(id, productoActual.precio, precio);
     }
 
     const actualizado = await Producto.actualizar(id, {
-      codigo, descripcion, precio, prioridad, categoria, disponible
+      codigo, descripcion, precio, prioridad, categoria, disponible, requiereAcompanamiento, tieneVariantes, requiereFicha
     });
 
     res.json(actualizado);
@@ -99,4 +97,53 @@ const getProductosParaConsultas = async (req, res) => {
   }
 }
 
-module.exports = { getProductos, getProducto, postProducto, putProducto, deleteProducto, getProductosParaConsultas };
+const getVariantes = async (req, res) => {
+  const { id } = req.params
+  try {
+    const variantes = await Producto.listarVariantes(id)
+    res.json(variantes)
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ msg: 'Error en el servidor' })
+  }
+}
+
+const postVariante = async (req, res) => {
+  const { id } = req.params
+  const { nombre } = req.body
+
+  if (!nombre || !nombre.trim()) {
+    return res.status(400).json({ msg: 'El nombre de la variante es obligatorio' })
+  }
+
+  try {
+    const variante = await Producto.crearVariante(id, nombre.trim())
+    res.json(variante)
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ msg: 'Error en el servidor' })
+  }
+}
+
+const deleteVariante = async (req, res) => {
+  const { varianteId } = req.params
+  try {
+    await Producto.eliminarVariante(varianteId)
+    res.json({ msg: 'Variante eliminada' })
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ msg: 'Error en el servidor' })
+  }
+}
+
+module.exports = {
+  getProductos,
+  getProducto,
+  postProducto,
+  putProducto,
+  deleteProducto,
+  getProductosParaConsultas,
+  getVariantes,
+  postVariante,
+  deleteVariante,
+};

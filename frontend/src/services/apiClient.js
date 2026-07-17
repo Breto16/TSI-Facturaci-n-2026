@@ -1,7 +1,11 @@
 import axios from 'axios'
 
+// En desarrollo (npm run dev) se usa la URL explícita del .env, porque el frontend
+// corre en un puerto distinto al backend (servidor de Vite vs Express).
+// En producción (build final), el mismo Express sirve frontend y backend juntos,
+// así que basta una ruta relativa: no importa la IP ni la red donde se ejecute.
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: import.meta.env.DEV ? import.meta.env.VITE_API_URL : '/api',
 });
 
 apiClient.interceptors.request.use((config) => {

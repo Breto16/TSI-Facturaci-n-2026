@@ -30,4 +30,28 @@ const putCierrePassword = async (req, res) => {
   }
 }
 
-module.exports = { postValidarCierre, putCierrePassword }
+const getPinSalonero = async (req, res) => {
+  try {
+    const pin = await Configuracion.obtener('pin_salonero')
+    res.json({ pin })
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ msg: 'Error en el servidor' })
+  }
+}
+
+const putPinSalonero = async (req, res) => {
+  const { pinNuevo } = req.body
+  if (!pinNuevo || !pinNuevo.trim()) {
+    return res.status(400).json({ msg: 'El PIN es obligatorio' })
+  }
+  try {
+    await Configuracion.actualizar('pin_salonero', pinNuevo.trim())
+    res.json({ msg: 'PIN actualizado' })
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ msg: 'Error en el servidor' })
+  }
+}
+
+module.exports = { postValidarCierre, putCierrePassword, getPinSalonero, putPinSalonero }

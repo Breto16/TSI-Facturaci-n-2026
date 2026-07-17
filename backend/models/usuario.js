@@ -1,10 +1,12 @@
 const pool = require('../db/connection');
 
 const buscarPorUsuario = async (usuario) => {
-  const { rows } = await pool.query(
-    'SELECT id, nombre, usuario, password_hash, rol, activo FROM usuarios WHERE usuario = $1',
-    [usuario]
-  );
+  const { rows } = await pool.query(`
+    SELECT u.id, u.nombre, u.usuario, u.password_hash, u.rol, u.activo, s.id AS salonero_id
+    FROM usuarios u
+    LEFT JOIN saloneros s ON s.usuario_id = u.id
+    WHERE u.usuario = $1
+  `, [usuario]);
   return rows[0];
 };
 

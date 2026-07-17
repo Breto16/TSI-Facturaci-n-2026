@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
 const Usuario = require('../models/usuario');
+const Configuracion = require('../models/configuracion');
 const { generarJWT } = require('../helpers/jwt');
 
 const login = async (req, res) => {
@@ -16,7 +17,15 @@ const login = async (req, res) => {
       return res.status(400).json({ msg: 'Usuario deshabilitado' });
     }
 
-    const passwordValida = bcrypt.compareSync(password, user.password_hash);
+    let passwordValida;
+
+    if (user.rol === 'salonero') {
+      // Los saloneros no usan password_hash: comparan contra el PIN genérico
+      const pinGuardado = await Configuracion.obtener('pin_salonero');
+      passwordValida = password === pinGuardado;
+    } else {
+      passwordValida = bcrypt.compareSync(password, user.password_hash);
+    }
 
     if (!passwordValida) {
       return res.status(400).json({ msg: 'Usuario o contraseña incorrectos' });
@@ -29,6 +38,7 @@ const login = async (req, res) => {
       nombre: user.nombre,
       usuario: user.usuario,
       rol: user.rol,
+      saloneroId: user.salonero_id || null,
       token
     });
 

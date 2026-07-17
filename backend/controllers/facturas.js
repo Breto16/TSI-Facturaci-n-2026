@@ -1,5 +1,6 @@
 const Factura = require('../models/factura')
 const FacturaItem = require('../models/facturaItem')
+const { emitirMesasActualizadas } = require('../sockets/io')
 
 const getFacturasPorMesa = async (req, res) => {
   const { mesaId } = req.params
@@ -21,6 +22,7 @@ const postFactura = async (req, res) => {
 
   try {
     const factura = await Factura.crear(mesa_id)
+    emitirMesasActualizadas()
     res.json(factura)
   } catch (error) {
     console.log(error)
@@ -66,6 +68,7 @@ const putFacturaEncabezado = async (req, res) => {
   try {
     const factura = await Factura.actualizarEncabezado(id, { mesa_id, salonero_id, detalle })
     if (!factura) return res.status(404).json({ msg: 'Factura no existe' })
+    emitirMesasActualizadas()
     res.json(factura)
   } catch (error) {
     console.log(error)
@@ -79,6 +82,7 @@ const putFacturaEstado = async (req, res) => {
   try {
     const factura = await Factura.actualizarEstado(id, estado, { tipo_pago, monto_recibido, cambio })
     if (!factura) return res.status(404).json({ msg: 'Factura no existe' })
+    emitirMesasActualizadas()
     res.json(factura)
   } catch (error) {
     console.log(error)
@@ -170,6 +174,7 @@ const postHija = async (req, res) => {
     if (!padre) return res.status(404).json({ msg: 'Factura padre no existe' })
 
     const hija = await Factura.crearHija(id, padre.mesa_id, padre.salonero_id)
+    emitirMesasActualizadas()
     res.json(hija)
   } catch (error) {
     console.log(error)

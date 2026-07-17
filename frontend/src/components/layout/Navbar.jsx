@@ -44,6 +44,9 @@ const Navbar = () => {
             <Nav.Link as={Link} to="/mesas" style={linkStyle}>
                Mesas
             </Nav.Link>
+            <Nav.Link as={Link} to="/validacion" style={linkStyle}>
+               Validación
+            </Nav.Link>
             <Nav.Link as={Link} to="/cierre" style={linkStyle}>
                Cierre
             </Nav.Link>

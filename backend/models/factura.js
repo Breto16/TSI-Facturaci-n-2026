@@ -274,8 +274,18 @@ const actualizarTruchasPendientes = async (id, cantidad) => {
   )
   return rows[0]
 }
+
+const incrementarTruchasPendientes = async (id, delta) => {
+  const { rows } = await pool.query(
+    `UPDATE facturas SET truchas_pendientes_cocina = truchas_pendientes_cocina + $1 WHERE id = $2 RETURNING *`,
+    [delta, id]
+  )
+  return rows[0]
+}
+
 module.exports = {
   listarPorMesa, crear, obtenerPorId, listarPaginado,
   actualizarEncabezado, actualizarEstado, recalcularTotales,
-  crearHija, listarHijas, moverItemsTransaccion, actualizarTruchasPendientes
+  crearHija, listarHijas, moverItemsTransaccion, actualizarTruchasPendientes,
+  incrementarTruchasPendientes
 }

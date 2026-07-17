@@ -18,7 +18,8 @@ const ventaPorProductos = async (codigos, fechaDesde, fechaHasta) => {
   `, [codigos, fechaDesde, fechaHasta + ' 23:59:59'])
 
   const total = rows.reduce((acc, r) => acc + Number(r.total), 0)
-  return { rows, total }
+  const totalArticulos = rows.reduce((acc, r) => acc + Number(r.cantidad), 0)
+  return { rows, total, totalArticulos }
 }
 
 const servicioPorSalonero = async (saloneroId, fechaDesde, fechaHasta) => {

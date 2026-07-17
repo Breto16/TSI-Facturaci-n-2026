@@ -1,13 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Container, Modal, Form } from 'react-bootstrap'
-import { Users, Plus, RefreshCw, UserCheck, UserX } from 'lucide-react'
+import { Modal, Form } from 'react-bootstrap'
+import { Users, Plus, RefreshCw, UserCheck, UserX, KeyRound } from 'lucide-react'
 import { sileo } from 'sileo'
-import { GRADIENTS } from '../../constants/theme'
 import { getSaloneros, crearSalonero, toggleSalonero } from '../../services/salonerosService'
+import { getPinSalonero, cambiarPinSalonero } from '../../services/configuracionService'
 import PageWrapper from '../../components/layout/PageWrapper'
-
-
-const GRADIENTE = GRADIENTS.bosque
 
 export default function PersonalPage() {
   const [saloneros, setSaloneros] = useState([])
@@ -16,6 +13,10 @@ export default function PersonalPage() {
   const [nombre, setNombre] = useState('')
   const [error, setError] = useState('')
   const [guardando, setGuardando] = useState(false)
+
+  const [pinActual, setPinActual] = useState('')
+  const [pinNuevo, setPinNuevo] = useState('')
+  const [cambiandoPin, setCambiandoPin] = useState(false)
 
   const cargar = useCallback(async () => {
     setCargando(true)
@@ -31,6 +32,10 @@ export default function PersonalPage() {
 
   useEffect(() => { cargar() }, [cargar])
 
+  useEffect(() => {
+    getPinSalonero().then(({ pin }) => setPinActual(pin || ''))
+  }, [])
+
   const handleCrear = async () => {
     if (!nombre.trim()) {
       setError('El nombre es obligatorio.')
@@ -38,8 +43,11 @@ export default function PersonalPage() {
     }
     setGuardando(true)
     try {
-      await crearSalonero(nombre.trim())
-      sileo.success({ title: 'Salonero agregado', description: `${nombre.trim()} fue agregado al sistema` })
+      const resultado = await crearSalonero(nombre.trim())
+      sileo.success({
+        title: 'Salonero agregado',
+        description: `${nombre.trim()} — usuario de acceso: ${resultado.usuario_login}`,
+      })
       setModalNuevo(false)
       setNombre('')
       setError('')
@@ -61,6 +69,21 @@ export default function PersonalPage() {
       cargar()
     } catch {
       sileo.error({ title: 'Error', description: 'No se pudo cambiar el estado' })
+    }
+  }
+
+  const handleCambiarPin = async () => {
+    if (!pinNuevo.trim()) return
+    setCambiandoPin(true)
+    try {
+      await cambiarPinSalonero(pinNuevo.trim())
+      setPinActual(pinNuevo.trim())
+      setPinNuevo('')
+      sileo.success({ title: 'PIN actualizado', description: 'El PIN de acceso para saloneros fue cambiado' })
+    } catch {
+      sileo.error({ title: 'Error', description: 'No se pudo cambiar el PIN' })
+    } finally {
+      setCambiandoPin(false)
     }
   }
 
@@ -136,7 +159,14 @@ export default function PersonalPage() {
                 >
                   <div className="d-flex align-items-center gap-3">
                     <UserCheck size={18} color="var(--color-success)" />
-                    <span style={{ fontWeight: 500, color: 'var(--color-text)' }}>{s.nombre}</span>
+                    <div>
+                      <div style={{ fontWeight: 500, color: 'var(--color-text)' }}>{s.nombre}</div>
+                      {s.usuario_login && (
+                        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
+                          usuario: {s.usuario_login}
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <button
                     onClick={() => handleToggle(s)}
@@ -177,7 +207,14 @@ export default function PersonalPage() {
                 >
                   <div className="d-flex align-items-center gap-3">
                     <UserX size={18} color="var(--color-text-secondary)" />
-                    <span style={{ fontWeight: 400, color: 'var(--color-text-secondary)' }}>{s.nombre}</span>
+                    <div>
+                      <div style={{ fontWeight: 400, color: 'var(--color-text-secondary)' }}>{s.nombre}</div>
+                      {s.usuario_login && (
+                        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
+                          usuario: {s.usuario_login}
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <button
                     onClick={() => handleToggle(s)}
@@ -200,6 +237,44 @@ export default function PersonalPage() {
         </div>
       </div>
 
+      {/* PIN de acceso para saloneros */}
+      <div style={{ marginTop: 24, borderRadius: 16, border: '1px solid var(--color-border)', padding: '1.25rem 1.5rem' }}>
+        <div className="d-flex align-items-center gap-2 mb-2">
+          <KeyRound size={16} color="var(--color-text-secondary)" />
+          <span className="fw-semibold small" style={{ color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: 1 }}>
+            PIN de acceso para saloneros
+          </span>
+        </div>
+        <div className="row g-2 align-items-end">
+          <div className="col-12 col-md-4">
+            <Form.Label className="small mb-1" style={{ color: 'var(--color-text-secondary)' }}>PIN actual</Form.Label>
+            <Form.Control
+              disabled
+              value={pinActual}
+              style={{ background: 'var(--color-background)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
+            />
+          </div>
+          <div className="col-12 col-md-4">
+            <Form.Label className="small mb-1" style={{ color: 'var(--color-text-secondary)' }}>Nuevo PIN</Form.Label>
+            <Form.Control
+              value={pinNuevo}
+              onChange={e => setPinNuevo(e.target.value)}
+              placeholder="Ej. 4821"
+              style={{ background: 'var(--color-background)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}
+            />
+          </div>
+          <div className="col-12 col-md-4">
+            <button
+              onClick={handleCambiarPin}
+              disabled={cambiandoPin || !pinNuevo.trim()}
+              style={{ width: '100%', background: 'var(--color-primary)', border: 'none', borderRadius: 8, padding: '7px', color: 'var(--color-text-bg)', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', opacity: (cambiandoPin || !pinNuevo.trim()) ? 0.6 : 1 }}
+            >
+              {cambiandoPin ? 'Cambiando...' : 'Cambiar PIN'}
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Modal nuevo salonero */}
       <Modal show={modalNuevo} onHide={() => setModalNuevo(false)} centered animation={false} contentClassName="border-0 bg-transparent">
         <div style={{ borderRadius: 16, overflow: 'hidden' }}>
@@ -217,7 +292,7 @@ export default function PersonalPage() {
               </button>
             </div>
             <div className="opacity-70 small mt-1" style={{ color: 'var(--color-text-bg)' }}>
-              Ingresá el nombre del salonero para agregarlo al sistema.
+              Ingresá el nombre del salonero. Se le creará automáticamente un usuario de acceso.
             </div>
           </div>
 

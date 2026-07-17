@@ -3,11 +3,14 @@ import { Spinner } from 'react-bootstrap'
 import { sileo } from 'sileo'
 import MesaCard from './components/MesaCard'
 import { getMesasConEstado } from '../../services/mesasService'
-
+import { socket } from '../../services/socket'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
 import SeleccionFacturaModal from './components/SeleccionFacturaModal'
 import ConfirmacionModal from './components/ConfirmacionModal'
-import { getFacturasPorMesa, crearFactura } from '../../services/facturasService'
+import SeleccionCuentaComandaModal from '../Comandas/components/SeleccionCuentaComandaModal'
+import ModalNuevaCuenta from '../Comandas/components/ModalNuevaCuenta'
+import { getFacturasPorMesa, crearFactura, actualizarDetalle } from '../../services/facturasService'
 
 
 const BLOQUE_A = {
@@ -92,10 +95,15 @@ const LEYENDA = [
 ]
 
 export default function MesasPage() {
+  const { usuario } = useAuth()
+  const esSalonero = usuario?.rol === 'salonero'
+
   const [mesas, setMesas] = useState([])
   const [cargando, setCargando] = useState(true)
   const [modalSeleccion, setModalSeleccion] = useState({ show: false, mesa: null, facturas: [] })
   const [modalConfirmacion, setModalConfirmacion] = useState({ show: false, mesa: null })
+  const [modalCuentas, setModalCuentas] = useState({ show: false, mesa: null, facturas: [] })
+  const [modalNuevaCuenta, setModalNuevaCuenta] = useState({ show: false, mesa: null })
   const [creando, setCreando] = useState(false)
 
   const navigate = useNavigate()
@@ -114,8 +122,16 @@ export default function MesasPage() {
   }, [])
 
   useEffect(() => { cargarMesas() }, [cargarMesas])
+  useEffect(() => {
+    socket.connect()
+    const handler = () => cargarMesas()
+    socket.on('mesas:actualizar', handler)
+    return () => {
+      socket.off('mesas:actualizar', handler)
+      socket.disconnect()
+    }
+  }, [cargarMesas])
 
-  // Tamaño de celda
   const calcularCeldaSize = useCallback(() => {
     const PADDING = 32
     const GAP_BLOQUES = 24
@@ -169,6 +185,28 @@ export default function MesasPage() {
 
   const handleClickMesa = async (numero) => {
     const mesa = getMesa(numero) || { id: numero, nombre: `Mesa ${numero}` }
+
+    if (esSalonero) {
+      try {
+        const facturas = await getFacturasPorMesa(numero)
+        if (facturas.length === 0) {
+          setCreando(true)
+          const factura = await crearFactura(numero)
+          setCreando(false)
+          navigate(`/comandas/factura/${factura.id}`)
+        } else if (facturas.length === 1) {
+          navigate(`/comandas/factura/${facturas[0].id}`)
+        } else {
+          setModalCuentas({ show: true, mesa, facturas })
+        }
+      } catch (err) {
+        console.error(err)
+        setCreando(false)
+        sileo.error({ title: 'Error', description: 'No se pudo acceder a la mesa' })
+      }
+      return
+    }
+
     try {
       const facturas = await getFacturasPorMesa(numero)
       if (facturas.length === 0) {
@@ -186,12 +224,47 @@ export default function MesasPage() {
 
   const handleLongPress = (numero) => {
     const mesa = getMesa(numero) || { id: numero, nombre: `Mesa ${numero}` }
+
+    if (esSalonero) {
+      setModalNuevaCuenta({ show: true, mesa })
+      return
+    }
+
     setModalConfirmacion({ show: true, mesa })
+  }
+
+  const handleCrearCuentaDesdeSeleccion = async (nombre) => {
+    setCreando(true)
+    try {
+      const factura = await crearFactura(modalCuentas.mesa.id)
+      await actualizarDetalle(factura.id, nombre)
+      setModalCuentas({ show: false, mesa: null, facturas: [] })
+      navigate(`/comandas/factura/${factura.id}`)
+    } catch (err) {
+      console.error(err)
+      sileo.error({ title: 'Error', description: 'No se pudo crear la cuenta' })
+    } finally {
+      setCreando(false)
+    }
+  }
+
+  const handleCrearCuentaDesdeLongPress = async (nombre) => {
+    setCreando(true)
+    try {
+      const factura = await crearFactura(modalNuevaCuenta.mesa.id)
+      await actualizarDetalle(factura.id, nombre)
+      setModalNuevaCuenta({ show: false, mesa: null })
+      navigate(`/comandas/factura/${factura.id}`)
+    } catch (err) {
+      console.error(err)
+      sileo.error({ title: 'Error', description: 'No se pudo crear la cuenta' })
+    } finally {
+      setCreando(false)
+    }
   }
 
   const gap = Math.max(6, Math.round(celdaSize * 0.11))
 
-  // gridProps siempre al final, después de todos los handlers
   const gridProps = {
     getMesa,
     onClickMesa: handleClickMesa,
@@ -213,31 +286,23 @@ export default function MesasPage() {
         </div>
       ) : (
         <>
-          {/* Mapa de mesas: ocupa todo el espacio disponible */}
           <div style={{
             flex: 1,
+            minHeight: 0,
             display: 'flex',
-            alignItems: 'center',
+            alignItems: 'stretch',
             justifyContent: 'center',
             overflow: 'hidden',
           }}>
-            {/* Vista desktop */}
             <div className="d-none d-md-flex align-items-center gap-3">
-
-              {/* Columna izquierda: A encima de D */}
               <div className="d-flex flex-column gap-2">
                 <BloqueGrid bloque={BLOQUE_A} {...gridProps} />
                 <BloqueGrid bloque={BLOQUE_D} {...gridProps} />
               </div>
-
-              {/* Bloque B */}
               <BloqueGrid bloque={BLOQUE_B} {...gridProps} />
-
-              {/* Bloque C */}
               <BloqueGrid bloque={BLOQUE_C} {...gridProps} />
             </div>
 
-            {/* Vista móvil */}
             <div
               className="d-md-none"
               style={{ overflowY: 'auto', width: '100%', padding: '8px' }}
@@ -272,7 +337,6 @@ export default function MesasPage() {
             </div>
           </div>
 
-          {/* Leyenda + botón actualizar: siempre al fondo */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
@@ -321,30 +385,58 @@ export default function MesasPage() {
         </>
       )}
 
-      <SeleccionFacturaModal
-        show={modalSeleccion.show}
-        onHide={() => setModalSeleccion({ show: false, mesa: null, facturas: [] })}
-        mesa={modalSeleccion.mesa}
-        facturas={modalSeleccion.facturas}
-        onSeleccionar={(id) => {
-          setModalSeleccion({ show: false, mesa: null, facturas: [] })
-          navigate(`/facturas/${id}`)
-        }}
-        onNueva={() => crearYNavegar(modalSeleccion.mesa?.id)}
-        creando={creando}
-      />
+      {!esSalonero && (
+        <>
+          <SeleccionFacturaModal
+            show={modalSeleccion.show}
+            onHide={() => setModalSeleccion({ show: false, mesa: null, facturas: [] })}
+            mesa={modalSeleccion.mesa}
+            facturas={modalSeleccion.facturas}
+            onSeleccionar={(id) => {
+              setModalSeleccion({ show: false, mesa: null, facturas: [] })
+              navigate(`/facturas/${id}`)
+            }}
+            onNueva={() => crearYNavegar(modalSeleccion.mesa?.id)}
+            creando={creando}
+          />
 
-      <ConfirmacionModal
-        show={modalConfirmacion.show}
-        onHide={() => setModalConfirmacion({ show: false, mesa: null })}
-        mesa={modalConfirmacion.mesa}
-        onConfirmar={() => {
-          setModalConfirmacion({ show: false, mesa: null })
-          crearYNavegar(modalConfirmacion.mesa?.id)
-        }}
-        creando={creando}
-      />
+          <ConfirmacionModal
+            show={modalConfirmacion.show}
+            onHide={() => setModalConfirmacion({ show: false, mesa: null })}
+            mesa={modalConfirmacion.mesa}
+            onConfirmar={() => {
+              setModalConfirmacion({ show: false, mesa: null })
+              crearYNavegar(modalConfirmacion.mesa?.id)
+            }}
+            creando={creando}
+          />
+        </>
+      )}
+
+      {esSalonero && (
+        <>
+          <SeleccionCuentaComandaModal
+            show={modalCuentas.show}
+            onHide={() => setModalCuentas({ show: false, mesa: null, facturas: [] })}
+            mesa={modalCuentas.mesa}
+            facturas={modalCuentas.facturas}
+            onSeleccionar={(facturaId) => {
+              setModalCuentas({ show: false, mesa: null, facturas: [] })
+              navigate(`/comandas/factura/${facturaId}`)
+            }}
+            onCrear={handleCrearCuentaDesdeSeleccion}
+            creando={creando}
+          />
+
+          <ModalNuevaCuenta
+            show={modalNuevaCuenta.show}
+            mesa={modalNuevaCuenta.mesa}
+            onHide={() => setModalNuevaCuenta({ show: false, mesa: null })}
+            onCrear={handleCrearCuentaDesdeLongPress}
+            creando={creando}
+          />
+        </>
+      )}
     </div>
-
   )
 }

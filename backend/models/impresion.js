@@ -205,7 +205,7 @@ const generarPDF = async (factura) => {
     y += 14
   }
 
-  
+
   doc.moveTo(10, y).lineTo(205, y).stroke()
   y += 8
 
@@ -411,7 +411,7 @@ const generarPDFCierre = async (datosCierre) => {
     doc.font('GSansRegular').fontSize(10)
 
     for (const c of datosCierre.consultasIncluidas) {
-      fila(c.titulo + ':', fmt(c.total))
+      fila(`${c.titulo} (${c.cantidad ?? 0} und.):`, fmt(c.total))
     }
   }
 
@@ -436,4 +436,194 @@ const imprimirCierre = async (datosCierre) => {
   return filePath
 }
 
-module.exports = { imprimirFactura, abrirCajaRegistradora, imprimirCierre }
+/* =========================
+   OBTENER COMANDA
+========================= */
+const obtenerDatosComanda = async (comandaId) => {
+  const { rows } = await pool.query(`
+    SELECT c.*, m.nombre AS mesa_nombre, s.nombre AS salonero_nombre, f.detalle AS factura_detalle
+    FROM comandas c
+    LEFT JOIN mesas m ON m.id = c.mesa_id
+    LEFT JOIN saloneros s ON s.id = c.salonero_id
+    LEFT JOIN facturas f ON f.id = c.factura_id
+    WHERE c.id = $1
+  `, [comandaId])
+
+  if (!rows[0]) return null
+
+  const { rows: items } = await pool.query(`
+    SELECT descripcion, cantidad, categoria, variante, acompanamiento, detalle
+    FROM comanda_items
+    WHERE comanda_id = $1
+    ORDER BY id ASC
+  `, [comandaId])
+
+  return { ...rows[0], items }
+}
+
+const ACOMPANAMIENTO_LABEL = {
+  yuca: 'Yuca', papa: 'Papa', patacon: 'Patacón', especial: 'Especial', solo: 'Solo(a)',
+}
+
+/* =========================
+   CALCULAR ALTO COMANDA
+========================= */
+const calcularAltoComanda = (items, comanda, tipo) => {
+  const ALTO_BASE = 40
+  let alto = ALTO_BASE
+
+  if (comanda.detalle) alto += 14
+  if (tipo === 'caja' && comanda.salonero_nombre) alto += 12
+
+  for (const item of items) {
+    let linea = `${item.cantidad}x ${item.descripcion}`
+    if (item.variante) linea += ` (${item.variante})`
+    if (item.acompanamiento) linea += ` c/${ACOMPANAMIENTO_LABEL[item.acompanamiento] || item.acompanamiento}`
+
+    const lineasEstimadas = Math.max(1, Math.ceil(linea.length / 28))
+    alto += lineasEstimadas * 14
+
+    if (item.detalle) alto += Math.max(1, Math.ceil(item.detalle.length / 32)) * 11
+    alto += 3
+  }
+
+  if (tipo === 'caja') alto += 10
+  if (comanda.ficha) alto += 18
+
+  return Math.max(180, Math.min(alto, 2000))
+}
+
+/* =========================
+   GENERAR PDF COMANDA
+========================= */
+const generarPDFComanda = async (comanda, items, tipo) => {
+  const dir = path.join(__dirname, '../assets/facturas')
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+
+  const filePath = path.join(dir, `comanda_${comanda.id}_${tipo}.pdf`)
+  const alto = calcularAltoComanda(items, comanda, tipo)
+
+  const doc = new PDFDocument({
+    size: [215, alto],
+    margins: { top: 0, bottom: 10, left: 0, right: 0 }
+  })
+
+  doc.pipe(fs.createWriteStream(filePath))
+
+  doc.registerFont('GSansRegular', path.join(__dirname, '../assets/GoogleSans-Regular.ttf'))
+  doc.registerFont('GSansBold', path.join(__dirname, '../assets/GoogleSans-Bold.ttf'))
+  doc.registerFont('GSansItalic', path.join(__dirname, '../assets/GoogleSans-MediumItalic.ttf'))
+
+  let y = 8
+
+  const mesaLimpia = (comanda.mesa_nombre || `Mesa ${comanda.mesa_id}`).replace(/mesa/i, '').trim()
+  const hora = new Date(comanda.creado_en).toLocaleTimeString('es-CR', { hour: '2-digit', minute: '2-digit', hour12: true })
+
+  doc.font('GSansBold').fontSize(13)
+  doc.text(`Mesa ${mesaLimpia}`, 10, y, { width: 100 })
+  doc.text(hora, 10, y, { width: 195, align: 'right' })
+  y += 17
+
+  if (comanda.factura_detalle) {
+    doc.font('GSansRegular').fontSize(10)
+    const textoCliente = `Cliente: ${comanda.factura_detalle}`
+    doc.text(textoCliente, 10, y, { width: 195 })
+    y += doc.heightOfString(textoCliente, { width: 195 }) + 2
+  }
+
+  if (tipo === 'caja' && comanda.salonero_nombre) {
+    doc.font('GSansRegular').fontSize(10)
+    doc.text(`Salonero: ${comanda.salonero_nombre}`, 10, y)
+    y += 12
+  }
+
+  y += 4
+
+  const imprimirItem = (item) => {
+    let linea = `${item.cantidad}x ${item.descripcion}`
+    if (item.variante) linea += ` (${item.variante})`
+    if (item.acompanamiento) linea += ` c/${ACOMPANAMIENTO_LABEL[item.acompanamiento] || item.acompanamiento}`
+
+    doc.font('GSansBold').fontSize(12)
+    doc.text(linea, 10, y, { width: 195 })
+    y += doc.heightOfString(linea, { width: 195 }) + 2
+
+    if (tipo === 'cocina' && item.detalle) {
+      doc.font('GSansItalic').fontSize(9)
+      const notaTexto = `Nota: ${item.detalle}`
+      doc.text(notaTexto, 15, y, { width: 190 })
+      y += doc.heightOfString(notaTexto, { width: 190 }) + 2
+    }
+
+    y += 3
+  }
+
+  if (tipo === 'caja') {
+    const itemsCocina = items.filter(i => i.categoria === 'cocina')
+    const itemsSalon = items.filter(i => i.categoria === 'salon')
+
+    itemsCocina.forEach(imprimirItem)
+
+    if (itemsCocina.length > 0 && itemsSalon.length > 0) {
+      y += 2
+      doc.moveTo(0, y).lineTo(215, y).stroke()
+      y += 8
+    }
+
+    itemsSalon.forEach(imprimirItem)
+  } else {
+    items.forEach(imprimirItem)
+  }
+
+  if (comanda.ficha) {
+    y += 6
+    doc.font('GSansBold').fontSize(11)
+    doc.text(comanda.ficha, 0, y, { align: 'center' })
+    y += 14
+  }
+
+  doc.end()
+
+  await new Promise((resolve) => {
+    const stream = fs.createWriteStream(filePath)
+    stream.on('finish', resolve)
+    setTimeout(resolve, 300)
+  })
+
+  return filePath
+}
+
+/* =========================
+   FUNCIONES PRINCIPALES
+========================= */
+const imprimirComandaCocina = async (comandaId) => {
+  const comanda = await obtenerDatosComanda(comandaId)
+  if (!comanda) throw new Error('Comanda no encontrada')
+
+  const itemsCocina = comanda.items.filter(i => i.categoria === 'cocina')
+  if (itemsCocina.length === 0) return null
+
+  const filePath = await generarPDFComanda(comanda, itemsCocina, 'cocina')
+  await imprimirPDF(filePath)
+  return filePath
+}
+
+const imprimirComandaCaja = async (comandaId) => {
+  const comanda = await obtenerDatosComanda(comandaId)
+  if (!comanda) throw new Error('Comanda no encontrada')
+
+  if (comanda.items.length === 0) return null
+
+  const filePath = await generarPDFComanda(comanda, comanda.items, 'caja')
+  await imprimirPDF(filePath)
+  return filePath
+}
+
+
+module.exports = {
+  imprimirFactura,
+  abrirCajaRegistradora,
+  imprimirCierre,
+  imprimirComandaCocina,
+  imprimirComandaCaja,
+}

@@ -4,7 +4,7 @@ import { Lock } from 'lucide-react'
 import { GRADIENTS } from '../../../constants/theme'
 import { validarCierrePassword } from '../../../services/configuracionService'
 
-export default function ModalPasswordCierre({ show, onValidado }) {
+export default function ModalPasswordCierre({ show, onValidado, onCancelar }) {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [validando, setValidando] = useState(false)
@@ -23,7 +23,7 @@ export default function ModalPasswordCierre({ show, onValidado }) {
   }
 
   return (
-    <Modal show={show} centered animation={false} backdrop="static" keyboard={false} contentClassName="border-0 bg-transparent">
+    <Modal show={show} centered animation={false} onHide={onCancelar} contentClassName="border-0 bg-transparent">
       <div style={{ borderRadius: 16, overflow: 'hidden' }}>
         <div style={{ background: GRADIENTS.rojo, padding: '1.25rem 1.5rem' }}>
           <div className="d-flex align-items-center gap-2">
@@ -46,13 +46,21 @@ export default function ModalPasswordCierre({ show, onValidado }) {
             placeholder="Contraseña"
             style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '1rem', marginBottom: 16 }}
           />
-          <button
-            onClick={handleValidar}
-            disabled={validando || !password}
-            style={{ width: '100%', background: GRADIENTS.rojo, border: 'none', borderRadius: 8, padding: '10px', color: 'white', fontWeight: 600, cursor: 'pointer', opacity: (validando || !password) ? 0.6 : 1 }}
-          >
-            {validando ? 'Verificando...' : 'Entrar'}
-          </button>
+          <div className="d-flex gap-2">
+            <button
+              onClick={onCancelar}
+              style={{ flex: 1, background: 'transparent', border: '1px solid var(--color-btn-secondary-border)', borderRadius: 8, padding: '10px', color: 'var(--color-btn-secondary-text)', fontWeight: 600, cursor: 'pointer' }}
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleValidar}
+              disabled={validando || !password}
+              style={{ flex: 1, background: GRADIENTS.rojo, border: 'none', borderRadius: 8, padding: '10px', color: 'white', fontWeight: 600, cursor: 'pointer', opacity: (validando || !password) ? 0.6 : 1 }}
+            >
+              {validando ? 'Verificando...' : 'Entrar'}
+            </button>
+          </div>
         </div>
       </div>
     </Modal>

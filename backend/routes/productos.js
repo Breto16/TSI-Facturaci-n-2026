@@ -1,5 +1,15 @@
 const { Router } = require('express');
-const { getProductos, getProducto, postProducto, putProducto, deleteProducto, getProductosParaConsultas } = require('../controllers/productos');
+const {
+  getProductos,
+  getProducto,
+  postProducto,
+  putProducto,
+  deleteProducto,
+  getProductosParaConsultas,
+  getVariantes,
+  postVariante,
+  deleteVariante,
+} = require('../controllers/productos');
 const { validarJWT } = require('../middlewares/validarJWT');
 
 const router = Router();
@@ -13,5 +23,8 @@ router.post('/', postProducto);
 router.put('/:id', putProducto);
 router.delete('/:id', deleteProducto);
 
+router.get('/:id/variantes', getVariantes)
+router.post('/:id/variantes', postVariante)
+router.delete('/variantes/:varianteId', deleteVariante)
 
 module.exports = router;

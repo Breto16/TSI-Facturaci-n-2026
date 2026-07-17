@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Modal, Spinner } from 'react-bootstrap'
-import { Fish } from 'lucide-react'
+import { Fish, ClipboardList } from 'lucide-react'
 import { sileo } from 'sileo'
 import { GRADIENTS } from '../../constants/theme'
 import TablaItems from './components/TablaItems'
@@ -15,9 +15,12 @@ import {
     eliminarItem, actualizarEncabezado, actualizarEstado, actualizarTruchasPendientes,
     actualizarTotales, getHijas, moverItems as moverItemsService
 } from '../../services/facturasService'
+import PanelComandasFactura from './components/PanelComandasFactura'
+import { getComandasPorFactura } from '../../services/comandasService'
 import { getSaloneros } from '../../services/salonerosService'
 import { getMesas } from '../../services/mesasService'
 import { getPrecioTruchaVigente } from '../../services/truchaService'
+import { socket } from '../../services/socket'
 
 const ESTADO_CONFIG = {
     abierta: { label: 'Abierta', color: 'var(--color-danger)' },
@@ -105,6 +108,11 @@ export default function FacturaPage() {
     const [itemPadreSeleccionado, setItemPadreSeleccionado] = useState(null)
     const [itemHijaSeleccionado, setItemHijaSeleccionado] = useState(null)
 
+    const [vistaPanel, setVistaPanel] = useState('productos') // 'productos' | 'comandas'
+    const [comandasFactura, setComandasFactura] = useState([])
+    const [cargandoComandas, setCargandoComandas] = useState(false)
+    const [itemsRevisados, setItemsRevisados] = useState(new Set())
+
     const cargar = useCallback(async () => {
         try {
             const [f, its, sals, mess, trucha] = await Promise.all([
@@ -142,6 +150,19 @@ export default function FacturaPage() {
     }, [id, navigate])
 
     useEffect(() => { cargar() }, [cargar])
+
+    const refrescarPorComanda = useCallback(async () => {
+        try {
+            const [f, its] = await Promise.all([getFactura(id), getItems(id)])
+            setFactura(f)
+            setItems(its)
+            setTruchasPendientes(f.truchas_pendientes_cocina || 0)
+        } catch {
+            // silencioso: si falla, el usuario igual puede refrescar manualmente
+        }
+    }, [id])
+
+
 
     useEffect(() => {
         if (hijaSeleccionada) {
@@ -474,6 +495,45 @@ export default function FacturaPage() {
             setProcesando(false)
         }
     }
+    const cargarComandasFactura = useCallback(async () => {
+        setCargandoComandas(true)
+        try {
+            const data = await getComandasPorFactura(id)
+            setComandasFactura(data)
+        } catch {
+            sileo.error({ title: 'Error', description: 'No se pudieron cargar las comandas' })
+        } finally {
+            setCargandoComandas(false)
+        }
+    }, [id])
+
+    useEffect(() => { cargarComandasFactura() }, [cargarComandasFactura])
+
+    const toggleItemRevisado = (itemId) => {
+        setItemsRevisados(prev => {
+            const next = new Set(prev)
+            if (next.has(itemId)) next.delete(itemId)
+            else next.add(itemId)
+            return next
+        })
+    }
+
+    useEffect(() => {
+        socket.connect()
+
+        const handler = (payload) => {
+            if (String(payload?.facturaId) === String(id)) {
+                refrescarPorComanda()
+                cargarComandasFactura()
+            }
+        }
+
+        socket.on('factura:actualizar', handler)
+        return () => {
+            socket.off('factura:actualizar', handler)
+            socket.disconnect()
+        }
+    }, [id, refrescarPorComanda, cargarComandasFactura])
 
     if (cargando) {
         return (
@@ -549,6 +609,15 @@ export default function FacturaPage() {
                     placeholder="Detalle / cliente..."
                     style={{ flex: 1, minWidth: 120, padding: '4px 8px', borderRadius: 8, border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '0.82rem' }}
                 />
+                {editable && !esDividida && (
+                    <button
+                        onClick={() => setVistaPanel(v => v === 'productos' ? 'comandas' : 'productos')}
+                        style={{ background: 'transparent', border: '1px solid var(--color-btn-secondary-border)', borderRadius: 8, padding: '4px 10px', cursor: 'pointer', color: 'var(--color-btn-secondary-text)', display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.78rem', fontWeight: 500, flexShrink: 0, whiteSpace: 'nowrap' }}
+                    >
+                        <ClipboardList size={14} />
+                        {vistaPanel === 'productos' ? 'Ver comandas' : 'Ver productos'}
+                    </button>
+                )}
             </div>
 
             {/* Contenido principal */}
@@ -781,10 +850,19 @@ export default function FacturaPage() {
                     </div>
                 ) : editable ? (
                     <div style={{ flex: '0 0 30%', minWidth: 0, padding: '12px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                        <SelectorProductos
-                            onSeleccionar={handleSeleccionarProducto}
-                            focusTrigger={focusTrigger}
-                        />
+                        {vistaPanel === 'productos' ? (
+                            <SelectorProductos
+                                onSeleccionar={handleSeleccionarProducto}
+                                focusTrigger={focusTrigger}
+                            />
+                        ) : (
+                            <PanelComandasFactura
+                                comandas={comandasFactura}
+                                cargando={cargandoComandas}
+                                revisados={itemsRevisados}
+                                onToggleRevisado={toggleItemRevisado}
+                            />
+                        )}
                     </div>
                 ) : null}
             </div>

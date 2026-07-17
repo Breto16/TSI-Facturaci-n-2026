@@ -24,3 +24,18 @@ export const getProductosParaConsultas = async () => {
   const { data } = await apiClient.get('/productos/consultas/listar')
   return data
 }
+
+export const getVariantes = async (productoId) => {
+  const { data } = await apiClient.get(`/productos/${productoId}/variantes`)
+  return data
+}
+
+export const crearVariante = async (productoId, nombre) => {
+  const { data } = await apiClient.post(`/productos/${productoId}/variantes`, { nombre })
+  return data
+}
+
+export const eliminarVariante = async (varianteId) => {
+  const { data } = await apiClient.delete(`/productos/variantes/${varianteId}`)
+  return data
+}
