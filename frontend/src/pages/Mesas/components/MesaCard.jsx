@@ -8,6 +8,7 @@ const ESTADO_COLOR = {
 }
 
 const LONG_PRESS_MS = 800
+const UMBRAL_MOVIMIENTO = 10 // px — más que esto se considera scroll, no tap
 
 export default function MesaCard({ mesa, numero, onClick, onLongPress, size = 72, mobile = false }) {
   const [hover, setHover] = useState(false)
@@ -15,6 +16,8 @@ export default function MesaCard({ mesa, numero, onClick, onLongPress, size = 72
   const timerRef = useRef(null)
   const longPressDisparado = useRef(false)
   const presionandoRef = useRef(false)
+  const movimientoExcedido = useRef(false)
+  const touchStartPos = useRef({ x: 0, y: 0 })
 
   const esAccesoRapido = numero === 0
   const estado = mesa?.estado || 'disponible'
@@ -27,20 +30,43 @@ export default function MesaCard({ mesa, numero, onClick, onLongPress, size = 72
   }, [])
 
   const iniciarPress = useCallback((e) => {
-    e.preventDefault()
+    // Solo bloqueamos el comportamiento default en mouse (selección de texto,
+    // imagen fantasma al arrastrar). En touch NO lo hacemos: interferir ahí
+    // es justo lo que causaba que un scroll real se confundiera con un tap.
+    if (e.type === 'mousedown') e.preventDefault()
+
     longPressDisparado.current = false
+    movimientoExcedido.current = false
     presionandoRef.current = true
     setProgreso(true)
 
+    if (e.touches && e.touches[0]) {
+      touchStartPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+    }
+
     timerRef.current = setTimeout(() => {
-      if (!presionandoRef.current) return
+      if (!presionandoRef.current || movimientoExcedido.current) return
       longPressDisparado.current = true
       setProgreso(false)
       onLongPress?.()
     }, LONG_PRESS_MS)
   }, [onLongPress])
 
+  const handleTouchMove = useCallback((e) => {
+    if (!presionandoRef.current || !e.touches?.[0]) return
+    const dx = e.touches[0].clientX - touchStartPos.current.x
+    const dy = e.touches[0].clientY - touchStartPos.current.y
+    if (Math.sqrt(dx * dx + dy * dy) > UMBRAL_MOVIMIENTO) {
+      movimientoExcedido.current = true
+      limpiar()
+    }
+  }, [limpiar])
+
   const handleRelease = useCallback(() => {
+    if (movimientoExcedido.current) {
+      limpiar()
+      return
+    }
     if (!longPressDisparado.current && presionandoRef.current) {
       limpiar()
       onClick?.()
@@ -52,6 +78,7 @@ export default function MesaCard({ mesa, numero, onClick, onLongPress, size = 72
   const handleCancel = useCallback(() => {
     limpiar()
     longPressDisparado.current = false
+    movimientoExcedido.current = false
   }, [limpiar])
 
   useEffect(() => () => clearTimeout(timerRef.current), [])
@@ -67,6 +94,7 @@ export default function MesaCard({ mesa, numero, onClick, onLongPress, size = 72
       onMouseLeave={handleCancel}
       onMouseEnter={() => setHover(true)}
       onTouchStart={iniciarPress}
+      onTouchMove={handleTouchMove}
       onTouchEnd={handleRelease}
       onTouchCancel={handleCancel}
       onContextMenu={(e) => e.preventDefault()}

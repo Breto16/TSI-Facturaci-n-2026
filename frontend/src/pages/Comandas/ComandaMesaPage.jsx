@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Spinner, Modal } from 'react-bootstrap'
-import { ArrowLeft, Plus, Trash2, Send, CheckCircle2, Circle } from 'lucide-react'
+import { ArrowLeft, Plus, Minus, Trash2, Send, CheckCircle2, Circle } from 'lucide-react'
 import { sileo } from 'sileo'
 import { useAuth } from '../../context/AuthContext'
 import SelectorProductosComanda from './components/SelectorProductosComanda'
@@ -66,6 +66,34 @@ export default function ComandaMesaPage() {
     return () => clearInterval(id)
   }, [])
 
+  // Protección contra pérdida accidental de la comanda sin enviar
+  useEffect(() => {
+    if (carrito.length === 0) return
+
+    const handleBeforeUnload = (e) => {
+      e.preventDefault()
+      e.returnValue = ''
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+
+    // Entrada "centinela" en el historial: si el usuario usa el botón
+    // atrás del navegador/dispositivo, primero cae acá y le preguntamos.
+    window.history.pushState(null, '', window.location.href)
+
+    const handlePopState = () => {
+      const salir = window.confirm('Tenés productos sin enviar en esta comanda. ¿Seguro que querés salir? Se van a perder.')
+      if (!salir) {
+        window.history.pushState(null, '', window.location.href)
+      }
+    }
+    window.addEventListener('popstate', handlePopState)
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      window.removeEventListener('popstate', handlePopState)
+    }
+  }, [carrito.length])
+
   const handleGuardarNombre = async () => {
     if (nombreCuenta === (factura?.detalle || '')) return
     try {
@@ -93,6 +121,18 @@ export default function ComandaMesaPage() {
 
   const quitarDelCarrito = (uid) => {
     setCarrito(prev => prev.filter(i => i.uid !== uid))
+  }
+
+  const cambiarCantidad = (uid, delta) => {
+    setCarrito(prev => prev
+      .map(item => item.uid === uid ? { ...item, cantidad: item.cantidad + delta } : item)
+      .filter(item => item.cantidad > 0)
+    )
+  }
+  const toggleSaleAntes = (uid) => {
+    setCarrito(prev => prev.map(item =>
+      item.uid === uid ? { ...item, saleAntes: !item.saleAntes } : item
+    ))
   }
 
   const fichaIncompleta = necesitaFicha && !sinFicha && !numeroFicha.trim()
@@ -148,7 +188,13 @@ export default function ComandaMesaPage() {
     <div style={{ height: '100%', padding: '12px 16px' }}>
       <div className="d-flex align-items-center gap-2 mb-3">
         <button
-          onClick={() => navigate('/mesas')}
+          onClick={() => {
+            if (carrito.length > 0) {
+              const salir = window.confirm('Tenés productos sin enviar en esta comanda. ¿Seguro que querés salir? Se van a perder.')
+              if (!salir) return
+            }
+            navigate('/mesas')
+          }}
           style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--color-text)', display: 'flex', alignItems: 'center' }}
         >
           <ArrowLeft size={22} />
@@ -214,16 +260,54 @@ export default function ComandaMesaPage() {
               ) : (
                 <div className="d-flex flex-column gap-2">
                   {carrito.map(item => (
-                    <div key={item.uid} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderRadius: 10, border: '1px solid var(--color-border)', padding: '10px 14px' }}>
-                      <div>
+                    <div key={item.uid} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderRadius: 10, border: '1px solid var(--color-border)', padding: '10px 14px', gap: 10 }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ color: 'var(--color-text)', fontSize: '0.95rem' }}>{formatoItem(item)}</div>
                         {item.detalle && (
                           <div style={{ color: 'var(--color-text-secondary)', fontSize: '0.8rem' }}>{item.detalle}</div>
                         )}
+                        {item.categoria === 'cocina' && (
+                          <label
+                            onClick={(e) => e.stopPropagation()}
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4, cursor: 'pointer' }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={!!item.saleAntes}
+                              onChange={() => toggleSaleAntes(item.uid)}
+                              style={{ width: 14, height: 14, accentColor: 'var(--color-primary)' }}
+                            />
+                            <span style={{ fontSize: '0.72rem', fontWeight: 600, color: item.saleAntes ? 'var(--color-primary)' : 'var(--color-text-secondary)' }}>
+                              Sale antes
+                            </span>
+                          </label>
+                        )}
                       </div>
+
+                      <div className="d-flex align-items-center gap-1" style={{ flexShrink: 0 }}>
+                        <button
+                          onClick={() => cambiarCantidad(item.uid, -1)}
+                          title={item.cantidad === 1 ? 'Quitar' : 'Restar uno'}
+                          style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                        >
+                          <Minus size={13} />
+                        </button>
+                        <span style={{ minWidth: 20, textAlign: 'center', fontWeight: 700, color: 'var(--color-text)', fontSize: '0.9rem' }}>
+                          {item.cantidad}
+                        </span>
+                        <button
+                          onClick={() => cambiarCantidad(item.uid, 1)}
+                          title="Sumar uno"
+                          style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                        >
+                          <Plus size={13} />
+                        </button>
+                      </div>
+
                       <button
                         onClick={() => quitarDelCarrito(item.uid)}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-danger)' }}
+                        title="Eliminar"
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-danger)', flexShrink: 0 }}
                       >
                         <Trash2 size={18} />
                       </button>
