@@ -28,14 +28,14 @@ const getProducto = async (req, res) => {
 };
 
 const postProducto = async (req, res) => {
-  const { codigo, descripcion, precio, prioridad, categoria, requiereAcompanamiento, tieneVariantes, requiereFicha } = req.body;
+  const { codigo, descripcion, precio, prioridad, categoria, requiereAcompanamiento, tieneVariantes, requiereFicha, prefijoEnVariante } = req.body;
 
   if (!descripcion || precio == null) {
     return res.status(400).json({ msg: 'Descripción y precio son obligatorios' });
   }
 
   try {
-    const nuevo = await Producto.crear({ codigo, descripcion, precio, prioridad, categoria, requiereAcompanamiento, tieneVariantes, requiereFicha });
+    const nuevo = await Producto.crear({ codigo, descripcion, precio, prioridad, categoria, requiereAcompanamiento, tieneVariantes, requiereFicha, prefijoEnVariante });
     res.json(nuevo);
   } catch (error) {
     console.log(error);
@@ -45,7 +45,7 @@ const postProducto = async (req, res) => {
 
 const putProducto = async (req, res) => {
   const { id } = req.params;
-  const { codigo, descripcion, precio, prioridad, categoria, disponible, requiereAcompanamiento, tieneVariantes, requiereFicha } = req.body;
+  const { codigo, descripcion, precio, prioridad, categoria, disponible, requiereAcompanamiento, tieneVariantes, requiereFicha, prefijoEnVariante } = req.body;
 
   try {
     const productoActual = await Producto.obtenerPorId(id);
@@ -59,7 +59,7 @@ const putProducto = async (req, res) => {
     }
 
     const actualizado = await Producto.actualizar(id, {
-      codigo, descripcion, precio, prioridad, categoria, disponible, requiereAcompanamiento, tieneVariantes, requiereFicha
+      codigo, descripcion, precio, prioridad, categoria, disponible, requiereAcompanamiento, tieneVariantes, requiereFicha, prefijoEnVariante
     });
 
     res.json(actualizado);

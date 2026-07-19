@@ -16,6 +16,7 @@ export default function ProductoFormModal({ show, onHide, producto, onGuardar })
     requiereAcompanamiento: false,
     tieneVariantes: false,
     requiereFicha: false,
+    prefijoEnVariante: false,
   })
   const [error, setError] = useState('')
 
@@ -35,10 +36,10 @@ export default function ProductoFormModal({ show, onHide, producto, onGuardar })
         requiereAcompanamiento: producto.requiere_acompanamiento || false,
         tieneVariantes: producto.tiene_variantes || false,
         requiereFicha: producto.requiere_ficha || false,
-
+        prefijoEnVariante: producto.prefijo_en_variante || false,
       } : {
         codigo: '', descripcion: '', precio: '', prioridad: 0, categoria: 'salon',
-        requiereAcompanamiento: false, tieneVariantes: false, requiereFicha: false,
+        requiereAcompanamiento: false, tieneVariantes: false, requiereFicha: false, prefijoEnVariante: false,
       })
     }
   }, [show, producto])
@@ -254,15 +255,6 @@ export default function ProductoFormModal({ show, onHide, producto, onGuardar })
               />
               <Form.Check
                 type="checkbox"
-                id="tiene-variantes"
-                className="mt-2"
-                label="Tiene variantes (sabores, tipos)"
-                checked={form.tieneVariantes}
-                onChange={(e) => handleChange('tieneVariantes', e.target.checked)}
-                style={{ color: 'var(--color-text)' }}
-              />
-              <Form.Check
-                type="checkbox"
                 id="requiere-ficha"
                 className="mt-2"
                 label="Requiere número de ficha (truchas)"
@@ -270,6 +262,27 @@ export default function ProductoFormModal({ show, onHide, producto, onGuardar })
                 onChange={(e) => handleChange('requiereFicha', e.target.checked)}
                 style={{ color: 'var(--color-text)' }}
               />
+              <Form.Check
+                type="checkbox"
+                id="tiene-variantes"
+                className="mt-2"
+                label="Tiene variantes (sabores, tipos)"
+                checked={form.tieneVariantes}
+                onChange={(e) => handleChange('tieneVariantes', e.target.checked)}
+                style={{ color: 'var(--color-text)' }}
+              />
+
+              {form.tieneVariantes && (
+                <Form.Check
+                  type="checkbox"
+                  id="prefijo-en-variante"
+                  className="mt-2"
+                  label="Mostrar nombre del producto junto a la variante (ej: Bavaria Gold)"
+                  checked={form.prefijoEnVariante}
+                  onChange={(e) => handleChange('prefijoEnVariante', e.target.checked)}
+                  style={{ color: 'var(--color-text)' }}
+                />
+              )}
 
               {form.tieneVariantes && !producto?.id && (
                 <div className="mt-2 small" style={{ color: 'var(--color-text-secondary)' }}>
