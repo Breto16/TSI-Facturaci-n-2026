@@ -1,5 +1,5 @@
 const bcrypt = require('bcryptjs');
-const pool = require('./db/connection');
+const pool = require('../db/connection');
 
 async function crearAdmin() {
   const nombre = 'Administrador';
