@@ -14,7 +14,7 @@ const construirOpciones = (productos) => {
         opciones.push({
           key: `${p.id}-v${v.id}`,
           producto: p,
-          label: v.nombre,
+          label: p.prefijo_en_variante ? `${p.descripcion} ${v.nombre}` : v.nombre,
           variante: v.nombre,
         })
       }

@@ -41,17 +41,17 @@ const obtenerVariosPorId = async (ids) => {
   return rows
 }
 
-const crear = async ({ codigo, descripcion, precio, prioridad, categoria, requiereAcompanamiento, tieneVariantes, requiereFicha }) => {
+const crear = async ({ codigo, descripcion, precio, prioridad, categoria, requiereAcompanamiento, tieneVariantes, requiereFicha, prefijoEnVariante }) => {
   const { rows } = await pool.query(
-    `INSERT INTO productos (codigo, descripcion, precio, prioridad, categoria, requiere_acompanamiento, tiene_variantes, requiere_ficha)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    `INSERT INTO productos (codigo, descripcion, precio, prioridad, categoria, requiere_acompanamiento, tiene_variantes, requiere_ficha, prefijo_en_variante)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
      RETURNING *`,
-    [codigo, descripcion, precio, prioridad || 0, categoria || 'salon', requiereAcompanamiento || false, tieneVariantes || false, requiereFicha || false]
+    [codigo, descripcion, precio, prioridad || 0, categoria || 'salon', requiereAcompanamiento || false, tieneVariantes || false, requiereFicha || false, prefijoEnVariante || false]
   );
   return rows[0];
 };
 
-const actualizar = async (id, { codigo, descripcion, precio, prioridad, categoria, disponible, requiereAcompanamiento, tieneVariantes, requiereFicha }) => {
+const actualizar = async (id, { codigo, descripcion, precio, prioridad, categoria, disponible, requiereAcompanamiento, tieneVariantes, requiereFicha, prefijoEnVariante }) => {
   const { rows } = await pool.query(
     `UPDATE productos SET
       codigo = COALESCE($1, codigo),
@@ -62,10 +62,11 @@ const actualizar = async (id, { codigo, descripcion, precio, prioridad, categori
       disponible = COALESCE($6, disponible),
       requiere_acompanamiento = COALESCE($7, requiere_acompanamiento),
       tiene_variantes = COALESCE($8, tiene_variantes),
-      requiere_ficha = COALESCE($9, requiere_ficha)
-     WHERE id = $10
+      requiere_ficha = COALESCE($9, requiere_ficha),
+      prefijo_en_variante = COALESCE($10, prefijo_en_variante)
+     WHERE id = $11
      RETURNING *`,
-    [codigo, descripcion, precio, prioridad, categoria, disponible, requiereAcompanamiento, tieneVariantes, requiereFicha, id]
+    [codigo, descripcion, precio, prioridad, categoria, disponible, requiereAcompanamiento, tieneVariantes, requiereFicha, prefijoEnVariante, id]
   );
   return rows[0];
 };
