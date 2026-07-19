@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Spinner } from 'react-bootstrap'
 import { sileo } from 'sileo'
 import MesaCard from './components/MesaCard'
@@ -105,6 +105,7 @@ export default function MesasPage() {
   const [modalCuentas, setModalCuentas] = useState({ show: false, mesa: null, facturas: [] })
   const [modalNuevaCuenta, setModalNuevaCuenta] = useState({ show: false, mesa: null })
   const [creando, setCreando] = useState(false)
+  const procesandoClickRef = useRef(false)
 
   const navigate = useNavigate()
 
@@ -182,8 +183,12 @@ export default function MesasPage() {
       setCreando(false)
     }
   }
+  
+const handleClickMesa = async (numero) => {
+  if (procesandoClickRef.current) return
+  procesandoClickRef.current = true
 
-  const handleClickMesa = async (numero) => {
+  try {
     const mesa = getMesa(numero) || { id: numero, nombre: `Mesa ${numero}` }
 
     if (esSalonero) {
@@ -220,7 +225,10 @@ export default function MesasPage() {
       console.error(err)
       sileo.error({ title: 'Error', description: 'No se pudo acceder a la mesa' })
     }
+  } finally {
+    procesandoClickRef.current = false
   }
+}
 
   const handleLongPress = (numero) => {
     const mesa = getMesa(numero) || { id: numero, nombre: `Mesa ${numero}` }

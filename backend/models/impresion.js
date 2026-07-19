@@ -452,7 +452,7 @@ const obtenerDatosComanda = async (comandaId) => {
   if (!rows[0]) return null
 
   const { rows: items } = await pool.query(`
-    SELECT descripcion, cantidad, categoria, variante, acompanamiento, detalle
+    SELECT descripcion, cantidad, categoria, variante, acompanamiento, detalle, sale_antes
     FROM comanda_items
     WHERE comanda_id = $1
     ORDER BY id ASC
@@ -465,43 +465,96 @@ const ACOMPANAMIENTO_LABEL = {
   yuca: 'Yuca', papa: 'Papa', patacon: 'Patacón', especial: 'Especial', solo: 'Solo(a)',
 }
 
-/* =========================
-   CALCULAR ALTO COMANDA
-========================= */
-const calcularAltoComanda = (items, comanda, tipo) => {
-  const ALTO_BASE = 40
-  let alto = ALTO_BASE
+// Tamaños de fuente usados en el cuerpo de la comanda — un solo lugar para
+// cambiarlos, tanto la medición como el render real leen de acá.
+const FUENTE_ITEM_SIZE_COCINA = 15
+const FUENTE_ITEM_SIZE_CAJA = 10
+const FUENTE_NOTA_SIZE = 13 // las notas solo se imprimen en cocina, no hace falta variante por tipo
 
-  if (comanda.detalle) alto += 14
-  if (tipo === 'caja' && comanda.salonero_nombre) alto += 12
+const registrarFuentes = (doc) => {
+  doc.registerFont('GSansRegular', path.join(__dirname, '../assets/GoogleSans-Regular.ttf'))
+  doc.registerFont('GSansBold', path.join(__dirname, '../assets/GoogleSans-Bold.ttf'))
+  doc.registerFont('GSansItalic', path.join(__dirname, '../assets/GoogleSans-MediumItalic.ttf'))
+}
 
-  for (const item of items) {
-    let linea = `${item.cantidad}x ${item.descripcion}`
-    if (item.variante) linea += ` (${item.variante})`
-    if (item.acompanamiento) linea += ` c/${ACOMPANAMIENTO_LABEL[item.acompanamiento] || item.acompanamiento}`
+const construirLineaItem = (item) => {
+  let linea = `${item.cantidad}x ${item.descripcion}`
+  if (item.variante) linea += ` (${item.variante})`
+  if (item.acompanamiento) linea += ` c/${ACOMPANAMIENTO_LABEL[item.acompanamiento] || item.acompanamiento}`
+  return linea
+}
 
-    const lineasEstimadas = Math.max(1, Math.ceil(linea.length / 28))
-    alto += lineasEstimadas * 14
+// Calcula cuánto espacio ocupa UN ítem (línea + nota si aplica), usando
+// heightOfString sobre el mismo doc/fuente que se va a usar para dibujar.
+const medirBloqueItem = (doc, item, tipo) => {
+  const linea = construirLineaItem(item)
+  const tamanoItem = tipo === 'cocina' ? FUENTE_ITEM_SIZE_COCINA : FUENTE_ITEM_SIZE_CAJA
 
-    if (item.detalle) alto += Math.max(1, Math.ceil(item.detalle.length / 32)) * 11
-    alto += 3
+  doc.font('GSansBold').fontSize(tamanoItem)
+  let alto = doc.heightOfString(linea, { width: 195 }) + 2
+
+  if (tipo === 'cocina' && item.detalle) {
+    doc.font('GSansItalic').fontSize(FUENTE_NOTA_SIZE)
+    const notaTexto = `Nota: ${item.detalle}`
+    alto += doc.heightOfString(notaTexto, { width: 190 }) + 2
   }
 
-  if (tipo === 'caja') alto += 10
-  if (comanda.ficha) alto += 18
+  return alto + 3
+}
 
-  return Math.max(180, Math.min(alto, 2000))
+/* =========================
+   CALCULAR ALTO COMANDA (medido, no estimado)
+========================= */
+const calcularAltoComanda = (items, comanda, tipo, prioridad = false) => {
+  const medidor = new PDFDocument({ size: [215, 5000], margins: { top: 0, bottom: 0, left: 0, right: 0 } })
+  medidor.pipe(new (require('stream').Writable)({ write(chunk, enc, cb) { cb() } }))
+  registrarFuentes(medidor)
+
+  let alto = 8
+
+  alto += 17
+  if (prioridad) alto += 16
+
+  if (comanda.factura_detalle) {
+    medidor.font('GSansRegular').fontSize(12)
+    const textoCliente = `Cliente: ${comanda.factura_detalle}`
+    alto += medidor.heightOfString(textoCliente, { width: 195 }) + 2
+  }
+
+  if (tipo === 'caja' && comanda.salonero_nombre) {
+    alto += 12
+  }
+
+  alto += 4
+
+  if (tipo === 'caja') {
+    const itemsCocina = items.filter(i => i.categoria === 'cocina')
+    const itemsSalon = items.filter(i => i.categoria === 'salon')
+
+    for (const item of itemsCocina) alto += medirBloqueItem(medidor, item, tipo)
+    if (itemsCocina.length > 0 && itemsSalon.length > 0) alto += 10
+    for (const item of itemsSalon) alto += medirBloqueItem(medidor, item, tipo)
+  } else {
+    for (const item of items) alto += medirBloqueItem(medidor, item, tipo)
+  }
+
+  if (comanda.ficha) alto += 20
+
+  medidor.end()
+
+  return Math.max(230, Math.min(Math.ceil(alto) + 15, 3000))
 }
 
 /* =========================
    GENERAR PDF COMANDA
 ========================= */
-const generarPDFComanda = async (comanda, items, tipo) => {
+const generarPDFComanda = async (comanda, items, tipo, prioridad = false) => {
   const dir = path.join(__dirname, '../assets/facturas')
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
 
-  const filePath = path.join(dir, `comanda_${comanda.id}_${tipo}.pdf`)
-  const alto = calcularAltoComanda(items, comanda, tipo)
+  const sufijo = prioridad ? '_antes' : ''
+  const filePath = path.join(dir, `comanda_${comanda.id}_${tipo}${sufijo}.pdf`)
+  const alto = calcularAltoComanda(items, comanda, tipo, prioridad)
 
   const doc = new PDFDocument({
     size: [215, alto],
@@ -509,23 +562,26 @@ const generarPDFComanda = async (comanda, items, tipo) => {
   })
 
   doc.pipe(fs.createWriteStream(filePath))
-
-  doc.registerFont('GSansRegular', path.join(__dirname, '../assets/GoogleSans-Regular.ttf'))
-  doc.registerFont('GSansBold', path.join(__dirname, '../assets/GoogleSans-Bold.ttf'))
-  doc.registerFont('GSansItalic', path.join(__dirname, '../assets/GoogleSans-MediumItalic.ttf'))
+  registrarFuentes(doc)
 
   let y = 8
 
   const mesaLimpia = (comanda.mesa_nombre || `Mesa ${comanda.mesa_id}`).replace(/mesa/i, '').trim()
   const hora = new Date(comanda.creado_en).toLocaleTimeString('es-CR', { hour: '2-digit', minute: '2-digit', hour12: true })
 
-  doc.font('GSansBold').fontSize(13)
+  doc.font('GSansBold').fontSize(12)
   doc.text(`Mesa ${mesaLimpia}`, 10, y, { width: 100 })
   doc.text(hora, 10, y, { width: 195, align: 'right' })
   y += 17
 
+  if (prioridad) {
+    doc.font('GSansBold').fontSize(13)
+    doc.text('SALE ANTES', 0, y, { align: 'center' })
+    y += 16
+  }
+
   if (comanda.factura_detalle) {
-    doc.font('GSansRegular').fontSize(10)
+    doc.font('GSansRegular').fontSize(12)
     const textoCliente = `Cliente: ${comanda.factura_detalle}`
     doc.text(textoCliente, 10, y, { width: 195 })
     y += doc.heightOfString(textoCliente, { width: 195 }) + 2
@@ -540,16 +596,15 @@ const generarPDFComanda = async (comanda, items, tipo) => {
   y += 4
 
   const imprimirItem = (item) => {
-    let linea = `${item.cantidad}x ${item.descripcion}`
-    if (item.variante) linea += ` (${item.variante})`
-    if (item.acompanamiento) linea += ` c/${ACOMPANAMIENTO_LABEL[item.acompanamiento] || item.acompanamiento}`
+    const linea = construirLineaItem(item)
+    const tamanoItem = tipo === 'cocina' ? FUENTE_ITEM_SIZE_COCINA : FUENTE_ITEM_SIZE_CAJA
 
-    doc.font('GSansBold').fontSize(12)
+    doc.font('GSansBold').fontSize(tamanoItem)
     doc.text(linea, 10, y, { width: 195 })
     y += doc.heightOfString(linea, { width: 195 }) + 2
 
     if (tipo === 'cocina' && item.detalle) {
-      doc.font('GSansItalic').fontSize(9)
+      doc.font('GSansItalic').fontSize(FUENTE_NOTA_SIZE)
       const notaTexto = `Nota: ${item.detalle}`
       doc.text(notaTexto, 15, y, { width: 190 })
       y += doc.heightOfString(notaTexto, { width: 190 }) + 2
@@ -601,11 +656,20 @@ const imprimirComandaCocina = async (comandaId) => {
   if (!comanda) throw new Error('Comanda no encontrada')
 
   const itemsCocina = comanda.items.filter(i => i.categoria === 'cocina')
-  if (itemsCocina.length === 0) return null
+  const itemsPrioridad = itemsCocina.filter(i => i.sale_antes)
+  const itemsNormales = itemsCocina.filter(i => !i.sale_antes)
 
-  const filePath = await generarPDFComanda(comanda, itemsCocina, 'cocina')
-  await imprimirPDF(filePath)
-  return filePath
+  if (itemsPrioridad.length > 0) {
+    const filePathPrioridad = await generarPDFComanda(comanda, itemsPrioridad, 'cocina', true)
+    await imprimirPDF(filePathPrioridad)
+  }
+
+  if (itemsNormales.length > 0) {
+    const filePathNormal = await generarPDFComanda(comanda, itemsNormales, 'cocina', false)
+    await imprimirPDF(filePathNormal)
+  }
+
+  return itemsPrioridad.length > 0 || itemsNormales.length > 0 ? true : null
 }
 
 const imprimirComandaCaja = async (comandaId) => {

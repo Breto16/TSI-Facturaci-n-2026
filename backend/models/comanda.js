@@ -15,8 +15,8 @@ const crear = async ({ mesaId, saloneroId, facturaId, items, ficha }) => {
     for (const item of items) {
       const { rows: itemRows } = await client.query(
         `INSERT INTO comanda_items
-          (comanda_id, producto_id, descripcion, cantidad, categoria, variante, acompanamiento, detalle)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          (comanda_id, producto_id, descripcion, cantidad, categoria, variante, acompanamiento, detalle, sale_antes)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
          RETURNING *`,
         [
           comanda.id,
@@ -27,6 +27,7 @@ const crear = async ({ mesaId, saloneroId, facturaId, items, ficha }) => {
           item.variante || null,
           item.acompanamiento || null,
           item.detalle || null,
+          !!item.saleAntes,
         ]
       )
       itemsInsertados.push(itemRows[0])

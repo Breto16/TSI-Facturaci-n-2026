@@ -14,18 +14,21 @@ export default function ModalDetalleItem({ show, producto, varianteInicial, onHi
   const [cantidad, setCantidad] = useState(1)
   const [acompanamiento, setAcompanamiento] = useState(null)
   const [detalle, setDetalle] = useState('')
+  const [saleAntes, setSaleAntes] = useState(false)
 
   useEffect(() => {
     if (show) {
       setCantidad(1)
       setAcompanamiento(null)
       setDetalle('')
+      setSaleAntes(false)
     }
   }, [show, producto?.id])
 
   if (!producto) return null
 
   const faltaAcompanamiento = producto.requiere_acompanamiento && !acompanamiento
+  const esCocina = producto.categoria === 'cocina'
 
   const handleConfirmar = () => {
     onConfirmar({
@@ -36,6 +39,7 @@ export default function ModalDetalleItem({ show, producto, varianteInicial, onHi
       variante: varianteInicial || null,
       acompanamiento: acompanamiento || null,
       detalle: detalle.trim() || null,
+      saleAntes: esCocina ? saleAntes : false,
     })
   }
 
@@ -104,7 +108,22 @@ export default function ModalDetalleItem({ show, producto, varianteInicial, onHi
             </>
           )}
 
-          <label className="fw-medium mb-2 d-block mt-3" style={{ color: 'var(--color-text)' }}>
+          {esCocina && (
+            <label className="d-flex align-items-center gap-2 mb-4" style={{ color: 'var(--color-text)', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={saleAntes}
+                onChange={e => setSaleAntes(e.target.checked)}
+                style={{ width: 20, height: 20, accentColor: 'var(--color-primary)' }}
+              />
+              <span style={{ fontWeight: 600 }}>Sale antes</span>
+              <span style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
+                (bebida caliente, entrada — imprime en ticket aparte de cocina)
+              </span>
+            </label>
+          )}
+
+          <label className="fw-medium mb-2 d-block mt-1" style={{ color: 'var(--color-text)' }}>
             Notas (opcional)
           </label>
           <textarea
