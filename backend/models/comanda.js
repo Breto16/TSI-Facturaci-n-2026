@@ -1,13 +1,13 @@
 const pool = require('../db/connection')
 
-const crear = async ({ mesaId, saloneroId, facturaId, items, ficha }) => {
+const crear = async ({ mesaId, saloneroId, facturaId, items, ficha, imprimirSalon }) => {
   const client = await pool.connect()
   try {
     await client.query('BEGIN')
 
     const { rows } = await client.query(
-      `INSERT INTO comandas (mesa_id, salonero_id, factura_id, ficha) VALUES ($1, $2, $3, $4) RETURNING *`,
-      [mesaId, saloneroId, facturaId, ficha || null]
+      `INSERT INTO comandas (mesa_id, salonero_id, factura_id, ficha, imprimir_salon) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [mesaId, saloneroId, facturaId, ficha || null, !!imprimirSalon]
     )
     const comanda = rows[0]
 
@@ -65,9 +65,8 @@ const obtenerPorId = async (id) => {
 
 const listarPorFactura = async (facturaId) => {
   const { rows: comandas } = await pool.query(`
-    SELECT c.*, m.nombre AS mesa_nombre, s.nombre AS salonero_nombre, f.detalle AS factura_detalle
+    SELECT c.*, s.nombre AS salonero_nombre, f.detalle AS factura_detalle
     FROM comandas c
-    LEFT JOIN mesas m ON m.id = c.mesa_id
     LEFT JOIN saloneros s ON s.id = c.salonero_id
     LEFT JOIN facturas f ON f.id = c.factura_id
     WHERE c.factura_id = $1
@@ -138,6 +137,14 @@ const marcarTodoTipoDespachado = async (comandaId, categoria) => {
   return rows
 }
 
+const eliminarItem = async (itemId) => {
+  await pool.query('DELETE FROM comanda_items WHERE id = $1', [itemId])
+}
+
+const eliminarTodosItems = async (comandaId) => {
+  await pool.query('DELETE FROM comanda_items WHERE comanda_id = $1', [comandaId])
+}
+
 module.exports = {
   crear,
   obtenerPorId,
@@ -145,4 +152,6 @@ module.exports = {
   listarActivas,
   marcarItemDespachado,
   marcarTodoTipoDespachado,
+  eliminarItem,
+  eliminarTodosItems,
 }

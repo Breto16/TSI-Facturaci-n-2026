@@ -280,3 +280,4 @@ WHERE descripcion ILIKE 'trucha%'
    OR descripcion ILIKE 'tilapia%';
 
 ALTER TABLE comanda_items ADD COLUMN sale_antes BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE comandas ADD COLUMN imprimir_salon BOOLEAN NOT NULL DEFAULT false;

@@ -9,13 +9,22 @@ const ACOMPANAMIENTO_LABEL = {
   yuca: 'Yuca', papa: 'Papa', patacon: 'Patacón', especial: 'Especial', solo: 'Solo(a)',
 }
 
-const GRACIA_MS = 10000
+const GRACIA_MS = 5000
 
 const formatoItem = (item) => {
   let texto = `${item.cantidad}× ${item.descripcion}`
   if (item.variante) texto += ` (${item.variante})`
   if (item.acompanamiento) texto += ` c/${ACOMPANAMIENTO_LABEL[item.acompanamiento] || item.acompanamiento}`
   return texto
+}
+
+const audioNotificacion = new Audio('/sounds/notificacion.wav')
+
+const reproducirBeep = () => {
+  audioNotificacion.currentTime = 0
+  audioNotificacion.play().catch(err => {
+    console.log('No se pudo reproducir el sonido:', err)
+  })
 }
 
 export default function ValidacionPage() {
@@ -49,6 +58,9 @@ export default function ValidacionPage() {
 
     const handleComandaNueva = (comanda) => {
       setComandas(prev => [...prev, comanda])
+      if (comanda.items?.some(i => i.categoria === 'cocina')) {
+        reproducirBeep()
+      }
     }
 
     const handleItemActualizado = (item) => {
@@ -58,12 +70,30 @@ export default function ValidacionPage() {
       }))
     }
 
+    const handleItemEliminado = ({ itemId }) => {
+      setComandas(prev => prev.map(c => ({
+        ...c,
+        items: c.items.filter(i => i.id !== Number(itemId)),
+      })))
+    }
+
+    const handleComandaVaciada = ({ comandaId }) => {
+      setComandas(prev => prev.map(c =>
+        c.id === Number(comandaId) ? { ...c, items: [] } : c
+      ))
+    }
+
+    socket.on('comanda-item:eliminado', handleItemEliminado)
+    socket.on('comanda:vaciada', handleComandaVaciada)
+
     socket.on('comanda:nueva', handleComandaNueva)
     socket.on('comanda-item:actualizado', handleItemActualizado)
 
     return () => {
       socket.off('comanda:nueva', handleComandaNueva)
       socket.off('comanda-item:actualizado', handleItemActualizado)
+      socket.off('comanda-item:eliminado', handleItemEliminado)
+      socket.off('comanda:vaciada', handleComandaVaciada)
       socket.disconnect()
     }
   }, [])
