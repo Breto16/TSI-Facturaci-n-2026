@@ -342,15 +342,6 @@ const ejecutarPowerShell = (comando) => {
   })
 }
 
-const ejecutarPowerShell = (comando) => {
-  return new Promise((resolve, reject) => {
-    exec(`powershell -Command "${comando}"`, (error, stdout, stderr) => {
-      if (error) reject(new Error(stderr || error.message))
-      else resolve(stdout)
-    })
-  })
-}
-
 const abrirCajaWindows = async () => {
   const nombreImpresora = process.env.PRINTER_NAME || 'EPSON TM-T20II Receipt'
 
