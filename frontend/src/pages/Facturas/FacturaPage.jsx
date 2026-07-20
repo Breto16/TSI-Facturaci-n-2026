@@ -97,8 +97,9 @@ export default function FacturaPage() {
     const [modalAnular, setModalAnular] = useState(false)
     const [modalDividir, setModalDividir] = useState(false)
     const [modalPago, setModalPago] = useState(false)
-    const [tipoPago, setTipoPago] = useState('efectivo')
+    const [tipoPago, setTipoPago] = useState('tarjeta')
     const [montoRecibido, setMontoRecibido] = useState('')
+    const [resumenPago, setResumenPago] = useState(null) // { cambio, montoRecibido } | null
     const [procesando, setProcesando] = useState(false)
     const [focusTrigger, setFocusTrigger] = useState(0)
 
@@ -480,12 +481,16 @@ export default function FacturaPage() {
                 cambio: cambioCalculado,
             })
             setFactura(f)
-            setModalPago(false)
 
             if (tipoPago === 'efectivo') {
                 try { await abrirCaja() } catch {
                     sileo.warning({ title: 'Aviso', description: 'El pago fue registrado pero no se pudo abrir la caja' })
                 }
+                // No cerramos el modal: mostramos el cambio a entregar hasta
+                // que el cajero lo confirme a propósito, así no se olvida.
+                setResumenPago({ cambio: cambioCalculado, montoRecibido: parseFloat(montoRecibido) })
+            } else {
+                setModalPago(false)
             }
 
             sileo.success({ title: 'Factura pagada', description: `#${id} cobrada exitosamente` })
@@ -494,6 +499,12 @@ export default function FacturaPage() {
         } finally {
             setProcesando(false)
         }
+    }
+
+    const handleCerrarModalPago = () => {
+        if (procesando) return
+        setResumenPago(null)
+        setModalPago(false)
     }
     const cargarComandasFactura = useCallback(async () => {
         setCargandoComandas(true)
@@ -814,7 +825,7 @@ export default function FacturaPage() {
                                     Imprimir
                                 </button>
                                 <button
-                                    onClick={() => { setModalPago(true); setTipoPago('efectivo'); setMontoRecibido('') }}
+                                    onClick={() => { setModalPago(true); setTipoPago('tarjeta'); setMontoRecibido('') }}
                                     style={{ ...BTN_BASE, background: 'var(--color-primary)', color: 'var(--color-text-bg)' }}
                                 >
                                     Pagar
@@ -861,6 +872,7 @@ export default function FacturaPage() {
                                 cargando={cargandoComandas}
                                 revisados={itemsRevisados}
                                 onToggleRevisado={toggleItemRevisado}
+                                onRecargar={cargarComandasFactura}
                             />
                         )}
                     </div>
@@ -896,90 +908,115 @@ export default function FacturaPage() {
                 procesando={procesando}
             />
 
-            <Modal show={modalPago} onHide={() => setModalPago(false)} centered animation={false} contentClassName="border-0 bg-transparent">
+            <Modal show={modalPago} onHide={handleCerrarModalPago} centered animation={false} contentClassName="border-0 bg-transparent">
                 <div style={{ borderRadius: 16, overflow: 'hidden' }}>
                     <div style={{ background: 'var(--color-primary)', padding: '1.25rem 1.5rem' }}>
                         <div className="d-flex align-items-center justify-content-between">
-                            <span className="fw-bold fs-5" style={{ color: 'var(--color-text-bg)' }}>Cobrar factura #{id}</span>
-                            <button onClick={() => setModalPago(false)} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', color: 'var(--color-text-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+                            <span className="fw-bold fs-5" style={{ color: 'var(--color-text-bg)' }}>
+                                {resumenPago ? `Cambio — Factura #${id}` : `Cobrar factura #${id}`}
+                            </span>
+                            <button onClick={handleCerrarModalPago} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', color: 'var(--color-text-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
                         </div>
-                        <div className="opacity-70 small mt-1" style={{ color: 'var(--color-text-bg)' }}>
-                            Total a cobrar: <strong>₡{totalFinal.toLocaleString('es-CR')}</strong>
-                        </div>
+                        {!resumenPago && (
+                            <div className="opacity-70 small mt-1" style={{ color: 'var(--color-text-bg)' }}>
+                                Total a cobrar: <strong>₡{totalFinal.toLocaleString('es-CR')}</strong>
+                            </div>
+                        )}
                     </div>
 
-                    <div style={{ background: 'var(--color-surface)', padding: '1.5rem' }}>
-                        <div style={{ display: 'flex', gap: 8, marginBottom: '1rem' }}>
-                            {['efectivo', 'tarjeta'].map(tipo => (
-                                <button
-                                    key={tipo}
-                                    onClick={() => setTipoPago(tipo)}
-                                    style={{
-                                        flex: 1, padding: '8px', borderRadius: 8,
-                                        border: `2px solid ${tipoPago === tipo ? 'var(--color-primary)' : 'var(--color-border)'}`,
-                                        background: 'transparent',
-                                        color: tipoPago === tipo ? 'var(--color-primary)' : 'var(--color-btn-secondary-text)',
-                                        fontWeight: tipoPago === tipo ? 700 : 400,
-                                        fontSize: '0.875rem', cursor: 'pointer', textTransform: 'capitalize',
-                                    }}
-                                >
-                                    {tipo}
-                                </button>
-                            ))}
-                        </div>
-
-                        {tipoPago === 'efectivo' && (
-                            <div style={{ padding: '12px', borderRadius: 8, background: 'var(--color-background)', marginBottom: '1rem', textAlign: 'center' }}>
-                                <span style={{ fontSize: '3rem', fontWeight: 700, color: 'var(--color-primary)' }}>
-                                    ₡{totalFinal.toLocaleString('es-CR')}
-                                </span>
-                                <div style={{ marginBottom: '1rem' }}>
-                                    <label style={{ fontSize: '0.82rem', color: 'var(--color-text-secondary)', display: 'block', marginBottom: 4, textAlign: 'start' }}>
-                                        Monto recibido
-                                    </label>
-                                    <input
-                                        autoFocus
-                                        type="number"
-                                        value={montoRecibido}
-                                        onChange={e => setMontoRecibido(e.target.value)}
-                                        style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '1.1rem', textAlign: 'right' }}
-                                    />
-                                    {montoRecibido && (
-                                        <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.9rem' }}>
-                                            <span style={{ color: 'var(--color-text-secondary)' }}>Cambio</span>
-                                            <span style={{ fontWeight: 700, fontSize: '1.5rem', color: cambioCalculado >= 0 ? 'var(--color-primary)' : 'var(--color-danger)' }}>
-                                                ₡{cambioCalculado.toLocaleString('es-CR')}
-                                            </span>
-                                        </div>
-                                    )}
-                                </div>
+                    {resumenPago ? (
+                        <div style={{ background: 'var(--color-surface)', padding: '2rem', textAlign: 'center' }}>
+                            <div style={{ fontSize: '0.9rem', color: 'var(--color-text-secondary)', marginBottom: 8 }}>
+                                Recibido ₡{resumenPago.montoRecibido.toLocaleString('es-CR')} — entregar de vuelto:
                             </div>
-                        )}
-
-                        {tipoPago === 'tarjeta' && (
-                            <div style={{ padding: '12px', borderRadius: 8, background: 'var(--color-background)', marginBottom: '1rem', textAlign: 'center' }}>
-                                <span style={{ fontSize: '3rem', fontWeight: 700, color: 'var(--color-primary)' }}>
-                                    ₡{totalFinal.toLocaleString('es-CR')}
-                                </span>
-                                <div style={{ fontSize: '0.78rem', color: 'var(--color-text-secondary)', marginTop: 4 }}>
-                                    Cobrar por el datafono
-                                </div>
+                            <div style={{
+                                fontSize: '3.5rem', fontWeight: 800,
+                                color: resumenPago.cambio >= 0 ? 'var(--color-primary)' : 'var(--color-danger)',
+                                marginBottom: 24,
+                            }}>
+                                ₡{resumenPago.cambio.toLocaleString('es-CR')}
                             </div>
-                        )}
-
-                        <div className="d-flex justify-content-end gap-2">
-                            <button onClick={() => setModalPago(false)} style={{ ...BTN_OUTLINE, border: '1px solid var(--color-btn-secondary-border)', color: 'var(--color-btn-secondary-text)' }}>
-                                Cancelar
-                            </button>
                             <button
-                                onClick={handlePagar}
-                                disabled={procesando || (tipoPago === 'efectivo' && !montoRecibido)}
-                                style={{ ...BTN_BASE, background: 'var(--color-primary)', color: 'white', opacity: (procesando || (tipoPago === 'efectivo' && !montoRecibido)) ? 0.6 : 1 }}
+                                onClick={handleCerrarModalPago}
+                                style={{ ...BTN_BASE, width: '100%', background: 'var(--color-primary)', color: 'var(--color-text-bg)', padding: '12px' }}
                             >
-                                {procesando ? 'Procesando...' : 'Confirmar pago'}
+                                Ya entregué el cambio
                             </button>
                         </div>
-                    </div>
+                    ) : (
+                        <div style={{ background: 'var(--color-surface)', padding: '1.5rem' }}>
+                            <div style={{ display: 'flex', gap: 8, marginBottom: '1rem' }}>
+                                {['tarjeta', 'efectivo'].map(tipo => (
+                                    <button
+                                        key={tipo}
+                                        onClick={() => setTipoPago(tipo)}
+                                        style={{
+                                            flex: 1, padding: '8px', borderRadius: 8,
+                                            border: `2px solid ${tipoPago === tipo ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                                            background: 'transparent',
+                                            color: tipoPago === tipo ? 'var(--color-primary)' : 'var(--color-btn-secondary-text)',
+                                            fontWeight: tipoPago === tipo ? 700 : 400,
+                                            fontSize: '0.875rem', cursor: 'pointer', textTransform: 'capitalize',
+                                        }}
+                                    >
+                                        {tipo}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {tipoPago === 'efectivo' && (
+                                <div style={{ padding: '12px', borderRadius: 8, background: 'var(--color-background)', marginBottom: '1rem', textAlign: 'center' }}>
+                                    <span style={{ fontSize: '3rem', fontWeight: 700, color: 'var(--color-primary)' }}>
+                                        ₡{totalFinal.toLocaleString('es-CR')}
+                                    </span>
+                                    <div style={{ marginBottom: '1rem' }}>
+                                        <label style={{ fontSize: '0.82rem', color: 'var(--color-text-secondary)', display: 'block', marginBottom: 4, textAlign: 'start' }}>
+                                            Monto recibido
+                                        </label>
+                                        <input
+                                            autoFocus
+                                            type="number"
+                                            value={montoRecibido}
+                                            onChange={e => setMontoRecibido(e.target.value)}
+                                            style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '1.1rem', textAlign: 'right' }}
+                                        />
+                                        {montoRecibido && (
+                                            <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.9rem' }}>
+                                                <span style={{ color: 'var(--color-text-secondary)' }}>Cambio</span>
+                                                <span style={{ fontWeight: 700, fontSize: '1.5rem', color: cambioCalculado >= 0 ? 'var(--color-primary)' : 'var(--color-danger)' }}>
+                                                    ₡{cambioCalculado.toLocaleString('es-CR')}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {tipoPago === 'tarjeta' && (
+                                <div style={{ padding: '12px', borderRadius: 8, background: 'var(--color-background)', marginBottom: '1rem', textAlign: 'center' }}>
+                                    <span style={{ fontSize: '3rem', fontWeight: 700, color: 'var(--color-primary)' }}>
+                                        ₡{totalFinal.toLocaleString('es-CR')}
+                                    </span>
+                                    <div style={{ fontSize: '0.78rem', color: 'var(--color-text-secondary)', marginTop: 4 }}>
+                                        Cobrar por el datafono
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="d-flex justify-content-end gap-2">
+                                <button onClick={handleCerrarModalPago} style={{ ...BTN_OUTLINE, border: '1px solid var(--color-btn-secondary-border)', color: 'var(--color-btn-secondary-text)' }}>
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={handlePagar}
+                                    disabled={procesando || (tipoPago === 'efectivo' && !montoRecibido)}
+                                    style={{ ...BTN_BASE, background: 'var(--color-primary)', color: 'white', opacity: (procesando || (tipoPago === 'efectivo' && !montoRecibido)) ? 0.6 : 1 }}
+                                >
+                                    {procesando ? 'Procesando...' : 'Confirmar pago'}
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </Modal>
         </div>

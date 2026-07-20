@@ -39,6 +39,7 @@ export default function ComandaMesaPage() {
   const [enviando, setEnviando] = useState(false)
   const [focusTrigger, setFocusTrigger] = useState(0)
   const [ahora, setAhora] = useState(Date.now())
+  const [imprimirSalon, setImprimirSalon] = useState(false)
 
   const cargarTodo = useCallback(async () => {
     setCargando(true)
@@ -150,12 +151,14 @@ export default function ComandaMesaPage() {
         factura.mesa_id,
         usuario?.saloneroId || null,
         carrito.map(({ uid, requiereFicha, ...item }) => item),
-        fichaFinal
+        fichaFinal,
+        imprimirSalon
       )
       sileo.success({ title: 'Comanda enviada', description: 'Se envió a cocina/caja correctamente' })
       setCarrito([])
       setSinFicha(false)
       setNumeroFicha('')
+      setImprimirSalon(false)
       cargarTodo()
     } catch (err) {
       console.error(err)
@@ -223,7 +226,15 @@ export default function ComandaMesaPage() {
             >
               <Plus size={20} /> Agregar producto
             </button>
-
+            <label className="d-flex align-items-center gap-2" style={{ color: 'var(--color-text)', cursor: 'pointer', fontSize: '0.9rem' }}>
+              <input
+                type="checkbox"
+                checked={imprimirSalon}
+                onChange={e => setImprimirSalon(e.target.checked)}
+                style={{ width: 16, height: 16, accentColor: 'var(--color-primary)' }}
+              />
+              Imprimir también ticket en caja
+            </label>
             {necesitaFicha && (
               <div style={{ borderRadius: 10, border: '1px solid var(--color-primary)', padding: '12px 14px' }}>
                 <label className="small fw-medium mb-2 d-block" style={{ color: 'var(--color-text)' }}>

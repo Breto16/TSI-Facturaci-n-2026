@@ -258,10 +258,15 @@ const obtenerRutaSumatra = () => {
   if (!fs.existsSync(rutaEnv)) {
     throw new Error(`No se encontró SumatraPDF en la ruta configurada: ${rutaEnv}`)
   }
+
+  if (!fs.statSync(rutaEnv).isFile()) {
+    throw new Error(`SUMATRA_PATH apunta a una carpeta, no al ejecutable: ${rutaEnv} (agregá "\\SumatraPDF.exe" al final)`)
+  }
+
   return rutaEnv
 }
 
-const imprimirPDF = async (filePath) => {
+const imprimirPDFWindows = async (filePath) => {
   const sumatraPath = obtenerRutaSumatra()
   const printerName = process.env.PRINTER_NAME
 
@@ -270,7 +275,7 @@ const imprimirPDF = async (filePath) => {
       ? `-print-to "${printerName}"`
       : '-print-to-default'
 
-    const cmd = `"${sumatraPath}" ${destino} -silent "${filePath}"`
+    const cmd = `"${sumatraPath}" ${destino} -print-settings "noscale" -silent "${filePath}"`
 
     exec(cmd, (err) => {
       if (err) {
@@ -281,6 +286,32 @@ const imprimirPDF = async (filePath) => {
       resolve()
     })
   })
+}
+
+const imprimirPDFLinux = async (filePath) => {
+  const printerName = process.env.PRINTER_NAME
+  if (!printerName) {
+    throw new Error('PRINTER_NAME no está configurado en .env (nombre de la cola CUPS)')
+  }
+
+  return new Promise((resolve, reject) => {
+    const cmd = `lp -d "${printerName}" "${filePath}"`
+
+    exec(cmd, (err) => {
+      if (err) {
+        console.error('Error imprimiendo con CUPS:', err.message)
+        return reject(err)
+      }
+      console.log('Impresión enviada con CUPS')
+      resolve()
+    })
+  })
+}
+
+const imprimirPDF = async (filePath) => {
+  return process.platform === 'win32'
+    ? imprimirPDFWindows(filePath)
+    : imprimirPDFLinux(filePath)
 }
 
 /* =========================
@@ -311,9 +342,16 @@ const ejecutarPowerShell = (comando) => {
   })
 }
 
-const abrirCajaRegistradora = async () => {
-  if (process.env.CAJA_REGISTRADORA !== 'true') return
+const ejecutarPowerShell = (comando) => {
+  return new Promise((resolve, reject) => {
+    exec(`powershell -Command "${comando}"`, (error, stdout, stderr) => {
+      if (error) reject(new Error(stderr || error.message))
+      else resolve(stdout)
+    })
+  })
+}
 
+const abrirCajaWindows = async () => {
   const nombreImpresora = process.env.PRINTER_NAME || 'EPSON TM-T20II Receipt'
 
   const comando = `
@@ -324,8 +362,37 @@ const abrirCajaRegistradora = async () => {
     $str | Out-Printer -Name $printerName
   `.replace(/\n/g, '; ').trim()
 
+  await ejecutarPowerShell(comando)
+}
+
+const abrirCajaLinux = async () => {
+  const printerName = process.env.PRINTER_NAME
+  if (!printerName) throw new Error('PRINTER_NAME no configurado en .env')
+
+  const dir = path.join(__dirname, '../assets/facturas')
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+  const tmpPath = path.join(dir, 'kick_caja.bin')
+
+  const bytes = Buffer.from([0x1B, 0x70, 0x00, 0x19, 0xFA])
+  fs.writeFileSync(tmpPath, bytes)
+
+  return new Promise((resolve, reject) => {
+    exec(`lp -d "${printerName}" -o raw "${tmpPath}"`, (err) => {
+      if (err) return reject(err)
+      resolve()
+    })
+  })
+}
+
+const abrirCajaRegistradora = async () => {
+  if (process.env.CAJA_REGISTRADORA !== 'true') return
+
   try {
-    await ejecutarPowerShell(comando)
+    if (process.platform === 'win32') {
+      await abrirCajaWindows()
+    } else {
+      await abrirCajaLinux()
+    }
   } catch (err) {
     console.log('Advertencia: no se pudo abrir la caja:', err.message)
   }
