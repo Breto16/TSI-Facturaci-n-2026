@@ -109,18 +109,31 @@ export default function ModalDetalleItem({ show, producto, varianteInicial, onHi
           )}
 
           {esCocina && (
-            <label className="d-flex align-items-center gap-2 mb-4" style={{ color: 'var(--color-text)', cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={saleAntes}
-                onChange={e => setSaleAntes(e.target.checked)}
-                style={{ width: 20, height: 20, accentColor: 'var(--color-primary)' }}
-              />
-              <span style={{ fontWeight: 600 }}>Sale antes</span>
-              <span style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>
-                (bebida caliente, entrada — imprime en ticket aparte de cocina)
-              </span>
-            </label>
+            <div className="mb-4">
+              <button
+                type="button"
+                onClick={() => setSaleAntes(v => !v)}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  width: '100%', padding: '10px 14px', borderRadius: 10,
+                  border: `1px solid ${saleAntes ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                  background: saleAntes ? 'var(--color-primary)' : 'var(--color-background)',
+                  color: saleAntes ? 'var(--color-text-bg)' : 'var(--color-text)',
+                  fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer',
+                }}
+              >
+                <span>¿Sale antes?</span>
+                <span style={{
+                  fontWeight: 800, padding: '2px 10px', borderRadius: 6,
+                  background: saleAntes ? 'rgba(255,255,255,0.25)' : 'var(--color-border)',
+                }}>
+                  {saleAntes ? 'SÍ' : 'NO'}
+                </span>
+              </button>
+              <div style={{ fontSize: '0.78rem', color: 'var(--color-text-secondary)', marginTop: 6 }}>
+                Entradas, acompañamientos, bebidas calientes o ordenes prioritarias.
+              </div>
+            </div>
           )}
 
           <label className="fw-medium mb-2 d-block mt-1" style={{ color: 'var(--color-text)' }}>

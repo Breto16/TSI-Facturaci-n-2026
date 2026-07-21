@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Spinner, Modal } from 'react-bootstrap'
-import { ArrowLeft, Plus, Minus, Trash2, Send, CheckCircle2, Circle } from 'lucide-react'
+import { ArrowLeft, Plus, Minus, Trash2, Send, CheckCircle2, Circle, Check } from 'lucide-react'
 import { sileo } from 'sileo'
 import { useAuth } from '../../context/AuthContext'
 import SelectorProductosComanda from './components/SelectorProductosComanda'
@@ -20,6 +20,30 @@ const formatoItem = (item) => {
   if (item.acompanamiento) texto += ` con ${ACOMPANAMIENTO_LABEL[item.acompanamiento] || item.acompanamiento}`
   return texto
 }
+const ToggleBoton = ({ pregunta, valor, onChange }) => (
+  <button
+    type="button"
+    onClick={() => onChange(!valor)}
+    style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      width: '100%', padding: '10px 14px', borderRadius: 10,
+      border: `1px solid ${valor ? 'var(--color-primary)' : 'var(--color-border)'}`,
+      background: valor ? 'var(--color-primary)' : 'var(--color-background)',
+      color: valor ? 'var(--color-text-bg)' : 'var(--color-text)',
+      fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer',
+    }}
+  >
+    <span>{pregunta}</span>
+    <span style={{
+      fontWeight: 800,
+      padding: '2px 10px',
+      borderRadius: 6,
+      background: valor ? 'rgba(255,255,255,0.25)' : 'var(--color-border)',
+    }}>
+      {valor ? 'SÍ' : 'NO'}
+    </span>
+  </button>
+)
 
 export default function ComandaMesaPage() {
   const { facturaId } = useParams()
@@ -40,6 +64,8 @@ export default function ComandaMesaPage() {
   const [focusTrigger, setFocusTrigger] = useState(0)
   const [ahora, setAhora] = useState(Date.now())
   const [imprimirSalon, setImprimirSalon] = useState(false)
+  const nombreCuentaRef = useRef(null)
+  const numeroFichaRef = useRef(null)
 
   const cargarTodo = useCallback(async () => {
     setCargando(true)
@@ -205,14 +231,25 @@ export default function ComandaMesaPage() {
         <h5 className="mb-0 fw-semibold" style={{ color: 'var(--color-text)' }}>
           Mesa {mesaLimpia}
         </h5>
-        <input
-          type="text"
-          value={nombreCuenta}
-          onChange={e => setNombreCuenta(e.target.value)}
-          onBlur={handleGuardarNombre}
-          placeholder="Nombre de la cuenta (opcional)"
-          style={{ flex: 1, padding: '6px 10px', borderRadius: 8, border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '0.9rem' }}
-        />
+        <div style={{ flex: 1, display: 'flex' }}>
+          <input
+            ref={nombreCuentaRef}
+            type="text"
+            value={nombreCuenta}
+            onChange={e => setNombreCuenta(e.target.value)}
+            onBlur={handleGuardarNombre}
+            placeholder="Nombre de la cuenta (opcional)"
+            style={{ flex: 1, padding: '6px 10px', borderRadius: '8px 0 0 8px', border: '1px solid var(--color-border)', borderRight: 'none', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '0.9rem' }}
+          />
+          <button
+            type="button"
+            onClick={() => nombreCuentaRef.current?.blur()}
+            title="Listo, cerrar teclado"
+            style={{ padding: '0 12px', borderRadius: '0 8px 8px 0', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+          >
+            <Check size={16} />
+          </button>
+        </div>
       </div>
 
       <div className="row g-3" style={{ height: 'calc(100% - 48px)' }}>
@@ -226,42 +263,59 @@ export default function ComandaMesaPage() {
             >
               <Plus size={20} /> Agregar producto
             </button>
-            <label className="d-flex align-items-center gap-2" style={{ color: 'var(--color-text)', cursor: 'pointer', fontSize: '0.9rem' }}>
-              <input
-                type="checkbox"
-                checked={imprimirSalon}
-                onChange={e => setImprimirSalon(e.target.checked)}
-                style={{ width: 16, height: 16, accentColor: 'var(--color-primary)' }}
-              />
-              Imprimir también ticket en caja
-            </label>
+            <ToggleBoton
+              pregunta="¿Imprimir también ticket en caja?"
+              valor={imprimirSalon}
+              onChange={setImprimirSalon}
+            />
             {necesitaFicha && (
-              <div style={{ borderRadius: 10, border: '1px solid var(--color-primary)', padding: '12px 14px' }}>
+              <div style={{ borderRadius: 10, border: `1px solid ${fichaIncompleta ? 'var(--color-danger)' : 'var(--color-primary)'}`, padding: '12px 14px' }}>
                 <label className="small fw-medium mb-2 d-block" style={{ color: 'var(--color-text)' }}>
                   Número de ficha (truchas)
                 </label>
-                <div className="d-flex align-items-center gap-3">
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    disabled={sinFicha}
-                    value={numeroFicha}
-                    onChange={e => setNumeroFicha(e.target.value)}
-                    placeholder="Ej: 12"
-                    style={{ width: 100, padding: '8px 12px', borderRadius: 8, border: '1px solid var(--color-border)', background: sinFicha ? 'var(--color-border)' : 'var(--color-background)', color: 'var(--color-text)', fontSize: '0.95rem', opacity: sinFicha ? 0.5 : 1 }}
-                  />
-                  <label className="d-flex align-items-center gap-2" style={{ color: 'var(--color-text)', cursor: 'pointer', fontSize: '0.9rem' }}>
-                    <input
-                      type="checkbox"
-                      checked={sinFicha}
-                      onChange={e => { setSinFicha(e.target.checked); setNumeroFicha('') }}
-                      style={{ width: 16, height: 16, accentColor: 'var(--color-primary)' }}
-                    />
-                    Sin ficha (truchas de cocina)
-                  </label>
+                <div>
+                  <div className="d-flex align-items-center gap-2">
+                    <div style={{ display: 'flex', flexShrink: 0 }}>
+                      <input
+                        ref={numeroFichaRef}
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={2}
+                        disabled={sinFicha}
+                        value={numeroFicha}
+                        onChange={e => setNumeroFicha(e.target.value)}
+                        placeholder="Ej: 12"
+                        style={{ width: 56, padding: '8px 10px', borderRadius: '8px 0 0 8px', border: '1px solid var(--color-border)', borderRight: 'none', background: sinFicha ? 'var(--color-border)' : 'var(--color-background)', color: 'var(--color-text)', fontSize: '0.95rem', opacity: sinFicha ? 0.5 : 1, textAlign: 'center' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => numeroFichaRef.current?.blur()}
+                        disabled={sinFicha}
+                        title="Listo, cerrar teclado"
+                        style={{ padding: '0 10px', borderRadius: '0 8px 8px 0', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text-secondary)', cursor: sinFicha ? 'default' : 'pointer', opacity: sinFicha ? 0.5 : 1, display: 'flex', alignItems: 'center' }}
+                      >
+                        <Check size={16} />
+                      </button>
+                    </div>
+
+                    <div style={{ flex: 1 }}>
+                      <ToggleBoton
+                        pregunta="¿Son truchas de cocina?"
+                        valor={sinFicha}
+                        onChange={(v) => { setSinFicha(v); setNumeroFicha('') }}
+                      />
+                    </div>
+                  </div>
+
+                  {fichaIncompleta && (
+                    <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--color-danger)', marginTop: 8 }}>
+                      Falta indicar la ficha para poder enviar la comanda
+                    </div>
+                  )}
                 </div>
               </div>
             )}
+
 
             <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', borderRadius: 12, border: '1px solid var(--color-border)', padding: 12 }}>
               {carrito.length === 0 ? (
@@ -331,10 +385,18 @@ export default function ComandaMesaPage() {
             <button
               onClick={handleEnviar}
               disabled={carrito.length === 0 || enviando || fichaIncompleta}
-              style={{ width: '100%', background: 'var(--color-primary)', border: 'none', borderRadius: 10, padding: '16px', color: 'var(--color-text-bg)', fontSize: '1.05rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: (carrito.length === 0 || enviando || fichaIncompleta) ? 0.6 : 1 }}
+              style={{
+                width: '100%',
+                background: fichaIncompleta ? 'var(--color-danger)' : 'var(--color-primary)',
+                border: 'none', borderRadius: 10, padding: '16px',
+                color: 'var(--color-text-bg)', fontSize: '1.05rem', fontWeight: 700,
+                cursor: (carrito.length === 0 || enviando || fichaIncompleta) ? 'not-allowed' : 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                opacity: (carrito.length === 0 || enviando) ? 0.6 : (fichaIncompleta ? 0.9 : 1),
+              }}
             >
               <Send size={18} />
-              {enviando ? 'Enviando...' : `Enviar comanda${carrito.length > 0 ? ` (${carrito.length})` : ''}`}
+              {enviando ? 'Enviando...' : fichaIncompleta ? 'Falta indicar la ficha' : `Enviar comanda${carrito.length > 0 ? ` (${carrito.length})` : ''}`}
             </button>
           </div>
         </div>

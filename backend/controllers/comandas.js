@@ -14,7 +14,7 @@ const { imprimirComandaCocina, imprimirComandaCaja } = require('../models/impres
 const postComanda = async (req, res) => {
   const { mesaId, saloneroId, facturaId, items, ficha, imprimirSalon } = req.body
 
-  if (!mesaId || !facturaId || !items || items.length === 0) {
+  if (mesaId == null || facturaId == null || !items || items.length === 0) {
     return res.status(400).json({ msg: 'La mesa, la factura y al menos un producto son obligatorios' })
   }
 
