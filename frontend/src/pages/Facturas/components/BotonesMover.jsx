@@ -61,13 +61,13 @@ export default function BotonesMover({ onMover }) {
       padding: '0 12px'
     }}>
       {btn('todo_derecha', <ChevronsRight size={iconSize} />, 'Mover todo a hija')}
-      {btn('fila_derecha', <ChevronRight size={iconSize} />, 'Mover fila a hija')}
-      {btn('uno_derecha', <ArrowRight size={iconSize} />, 'Mover 1 a hija')}
+      {btn('fila_derecha', <ArrowRight size={iconSize} />, 'Mover fila a hija')}
+      {btn('uno_derecha', <ChevronRight size={iconSize} />, 'Mover 1 a hija')}
 
       <div style={{ width: Math.round(btnSize * 0.6), height: 1, backgroundColor: 'var(--color-border)' }} />
 
-      {btn('uno_izquierda', <ArrowLeft size={iconSize} />, 'Regresar 1 a padre')}
-      {btn('fila_izquierda', <ChevronLeft size={iconSize} />, 'Regresar fila a padre')}
+      {btn('uno_izquierda', <ChevronLeft size={iconSize} />, 'Regresar 1 a padre')}
+      {btn('fila_izquierda', <ArrowLeft size={iconSize} />, 'Regresar fila a padre')}
       {btn('todo_izquierda', <ChevronsLeft size={iconSize} />, 'Regresar todo a padre')}
     </div>
   )

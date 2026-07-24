@@ -7,11 +7,11 @@ export default function ConfirmacionModal({ show, onHide, onConfirmar, mesa, cre
     <Modal show={show} onHide={onHide} centered animation={false} contentClassName="border-0 bg-transparent">
       <div style={{ borderRadius: 16, overflow: 'hidden' }}>
 
-        <div style={{ background: GRADIENTS.forest, padding: '1.25rem 1.5rem' }}>
+        <div style={{ background: 'var(--color-info)', color: 'var(--color-text-bg)', padding: '1.25rem 1.5rem' }}>
           <div className="d-flex align-items-center justify-content-between">
             <div className="d-flex align-items-center gap-2">
-              <PlusCircle size={20} color="white" />
-              <span className="fw-bold text-white fs-5">Nueva cuenta</span>
+              <PlusCircle size={20} color="var(--color-text-bg)" />
+              <span className="fw-bold fs-5">Nueva cuenta en {`mesa ${mesa?.id}` || `mesa ${mesa?.id}`}</span>
             </div>
             <button
               onClick={onHide}
@@ -22,7 +22,7 @@ export default function ConfirmacionModal({ show, onHide, onConfirmar, mesa, cre
                 width: 32,
                 height: 32,
                 cursor: 'pointer',
-                color: 'white',
+                color: 'var(--color-text-bg)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -32,14 +32,12 @@ export default function ConfirmacionModal({ show, onHide, onConfirmar, mesa, cre
               ✕
             </button>
           </div>
-          <div className="text-white opacity-70 small mt-1">
-            {mesa?.nombre || `Mesa ${mesa?.id}`}
-          </div>
+          
         </div>
 
         <div style={{ background: 'var(--color-surface)', padding: '1.5rem' }}>
           <p style={{ color: 'var(--color-text)', marginBottom: '1.5rem' }}>
-            ¿Querés crear una cuenta adicional en esta mesa?
+            ¿Quieres crear una cuenta adicional en esta mesa?
           </p>
 
           <div className="d-flex justify-content-end gap-2">
@@ -61,11 +59,11 @@ export default function ConfirmacionModal({ show, onHide, onConfirmar, mesa, cre
               onClick={onConfirmar}
               disabled={creando}
               style={{
-                background: GRADIENTS.forest,
+                background: 'var(--color-info)',
                 border: 'none',
                 borderRadius: 8,
                 padding: '7px 16px',
-                color: 'white',
+                color: 'var(--color-text-bg)',
                 fontSize: '0.875rem',
                 fontWeight: 500,
                 cursor: 'pointer',

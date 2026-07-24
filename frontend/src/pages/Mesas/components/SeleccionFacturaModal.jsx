@@ -3,9 +3,9 @@ import { Plus, ChevronRight, Receipt } from 'lucide-react'
 import { GRADIENTS } from '../../../constants/theme'
 
 const ESTADO_CONFIG = {
-  abierta:  { label: 'Abierta',  color: '#dc2626', bg: '#fef2f2' },
-  impresa:  { label: 'Impresa',  color: '#92400e', bg: '#fef3c7' },
-  dividida: { label: 'Dividida', color: '#0891b2', bg: '#e0f2fe' },
+  abierta:  { label: 'Abierta',  color: 'var(--color-danger)', bg: '#fef2f2' },
+  impresa:  { label: 'Impresa',  color: 'var(--color-warning)', bg: '#fef3c7' },
+  dividida: { label: 'Dividida', color: 'var(--color-info)', bg: '#e0f2fe' },
 }
 
 export default function SeleccionFacturaModal({ show, onHide, mesa, facturas, onSeleccionar, onNueva, creando }) {
@@ -13,11 +13,11 @@ export default function SeleccionFacturaModal({ show, onHide, mesa, facturas, on
     <Modal show={show} onHide={onHide} centered animation={true} contentClassName="border-0 bg-transparent">
       <div style={{ borderRadius: 16, overflow: 'hidden' }}>
 
-        <div style={{ background: GRADIENTS.azul, padding: '1.25rem 1.5rem' }}>
+        <div style={{ background: 'var(--color-info)', padding: '1.25rem 1.5rem', color:'var(--color-text-bg)' }}>
           <div className="d-flex align-items-center justify-content-between">
             <div className="d-flex align-items-center gap-2">
-              <Receipt size={20} color="white" />
-              <span className="fw-bold text-white fs-5">
+              <Receipt size={20} />
+              <span className="fw-bold fs-5">
                 {mesa?.nombre || `Mesa ${mesa?.id}`}
               </span>
             </div>
@@ -30,7 +30,6 @@ export default function SeleccionFacturaModal({ show, onHide, mesa, facturas, on
                 width: 32,
                 height: 32,
                 cursor: 'pointer',
-                color: 'white',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -40,7 +39,7 @@ export default function SeleccionFacturaModal({ show, onHide, mesa, facturas, on
               ✕
             </button>
           </div>
-          <div className="text-white opacity-70 small mt-1">
+          <div className=" opacity-70 small mt-1">
             Seleccioná una cuenta o creá una nueva
           </div>
         </div>

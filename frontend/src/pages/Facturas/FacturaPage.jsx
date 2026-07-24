@@ -53,10 +53,10 @@ const esEditable = (estado) => estado === 'abierta' || estado === 'impresa'
 const ModalConfirmacion = ({ show, onHide, titulo, descripcion, onConfirmar, colorBtn, textoBtn, procesando }) => (
     <Modal show={show} onHide={onHide} centered animation={false} contentClassName="border-0 bg-transparent">
         <div style={{ borderRadius: 16, overflow: 'hidden' }}>
-            <div style={{ background: GRADIENTS.azul, padding: '1.25rem 1.5rem' }}>
+            <div style={{ background: colorBtn, padding: '1.25rem 1.5rem', color:'var(--color-text-bg)' }}>
                 <div className="d-flex align-items-center justify-content-between">
-                    <span className="fw-bold text-white fs-5">{titulo}</span>
-                    <button onClick={onHide} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+                    <span className="fw-bold fs-5">{titulo}</span>
+                    <button onClick={onHide} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
                 </div>
             </div>
             <div style={{ background: 'var(--color-surface)', padding: '1.5rem' }}>
@@ -65,7 +65,7 @@ const ModalConfirmacion = ({ show, onHide, titulo, descripcion, onConfirmar, col
                     <button onClick={onHide} style={{ ...BTN_OUTLINE, border: '1px solid var(--color-btn-secondary-border)', color: 'var(--color-btn-secondary-text)' }}>
                         Cancelar
                     </button>
-                    <button onClick={onConfirmar} disabled={procesando} style={{ ...BTN_BASE, background: colorBtn, color: 'white', opacity: procesando ? 0.6 : 1 }}>
+                    <button onClick={onConfirmar} disabled={procesando} style={{ ...BTN_BASE, background: colorBtn, color: 'var(--color-text-bg)', opacity: procesando ? 0.6 : 1 }}>
                         {procesando ? 'Procesando...' : textoBtn}
                     </button>
                 </div>
@@ -608,7 +608,9 @@ export default function FacturaPage() {
                     disabled={!editable && !esDividida ? true : !editable}
                     style={{ padding: '4px 6px', borderRadius: 8, border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '0.82rem' }}
                 >
-                    {saloneros.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}
+                    {saloneros
+                        .filter(s => s.disponible || s.id === Number(factura.salonero_id))
+                        .map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}
                 </select>
 
                 <input
@@ -1010,7 +1012,7 @@ export default function FacturaPage() {
                                 <button
                                     onClick={handlePagar}
                                     disabled={procesando || (tipoPago === 'efectivo' && !montoRecibido)}
-                                    style={{ ...BTN_BASE, background: 'var(--color-primary)', color: 'white', opacity: (procesando || (tipoPago === 'efectivo' && !montoRecibido)) ? 0.6 : 1 }}
+                                    style={{ ...BTN_BASE, background: 'var(--color-primary)', color: 'var(--color-text-bg)', opacity: (procesando || (tipoPago === 'efectivo' && !montoRecibido)) ? 0.6 : 1 }}
                                 >
                                     {procesando ? 'Procesando...' : 'Confirmar pago'}
                                 </button>
