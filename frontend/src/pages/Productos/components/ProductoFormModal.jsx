@@ -98,11 +98,11 @@ export default function ProductoFormModal({ show, onHide, producto, onGuardar })
       <div style={{ borderRadius: 16, overflow: 'hidden' }}>
 
         {/* Header */}
-        <div style={{ background: G, padding: '1.25rem 1.5rem' }}>
-          <div className="d-flex align-items-center justify-content-between">
+        <div style={{ background: 'var(--color-primary)', color: 'var(--color-text-bg)', padding: '1.25rem 1.5rem' }}>
+          <div className="d-flex align-items-center justify-content-between" >
             <div className="d-flex align-items-center gap-2">
-              <Package size={20} color="white" />
-              <span className="fw-bold text-white fs-5">
+              <Package size={20} color="var(--color-text-bg)" />
+              <span className="fw-bold fs-5" >
                 {producto ? 'Editar producto' : 'Nuevo producto'}
               </span>
             </div>
@@ -115,7 +115,7 @@ export default function ProductoFormModal({ show, onHide, producto, onGuardar })
                 width: 32,
                 height: 32,
                 cursor: 'pointer',
-                color: 'white',
+                color: 'var(--color-text-bg)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -125,7 +125,7 @@ export default function ProductoFormModal({ show, onHide, producto, onGuardar })
               ✕
             </button>
           </div>
-          <div className="text-white opacity-70 small mt-1">
+          <div className="opacity-70 small mt-1">
             {producto ? 'Modificá los datos del producto.' : 'Completá los datos para agregar un producto al catálogo.'}
           </div>
         </div>
@@ -356,11 +356,11 @@ export default function ProductoFormModal({ show, onHide, producto, onGuardar })
               <button
                 type="submit"
                 style={{
-                  background: G,
+                  background: 'var(--color-primary)',
                   border: 'none',
                   borderRadius: 8,
                   padding: '7px 16px',
-                  color: 'white',
+                  color: 'var(--color-text-bg)',
                   fontSize: '0.875rem',
                   fontWeight: 500,
                   cursor: 'pointer',

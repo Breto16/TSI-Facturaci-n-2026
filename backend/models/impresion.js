@@ -34,22 +34,71 @@ const obtenerDatosFactura = async (facturaId) => {
    MONEDA
 ========================= */
 const fmt = (monto) => `¢${Number(monto).toLocaleString('es-CR')}`
+// Columnas de la tabla de items — un solo lugar para ajustar anchos
+const COL_CANT_X = 8
+const COL_CANT_W = 24
+const COL_DESC_X = 36
+const COL_DESC_W = 114
+const COL_TOTAL_X = 152
+const COL_TOTAL_W = 53
 
+// Calcula la altura total que ocupa UN item (descripción envuelta + línea
+// de precio unitario) — la usan tanto calcularAltoDocumento (medición)
+// como generarPDF (render real), así nunca pueden desincronizarse.
+const alturaItem = (doc, item) => {
+  doc.font('GSansRegular').fontSize(11)
+  const altoDesc = doc.heightOfString(item.descripcion, { width: COL_DESC_W })
+  return altoDesc + 2 + 12 // descripción + espacio + línea de precio unitario
+}
 /* =========================
    CALCULAR ALTO DINÁMICO
 ========================= */
 const calcularAltoDocumento = (factura) => {
-  const ALTO_BASE = 320 // header + logo + info factura + totales + footer, con margen extra
-  const ALTO_POR_ITEM = 30 // descripcion + precio unitario por item, con margen extra
+  const medidor = new PDFDocument({ size: [215, 5000], margins: { top: 0, bottom: 0, left: 0, right: 0 } })
+  medidor.pipe(new (require('stream').Writable)({ write(chunk, enc, cb) { cb() } }))
+  medidor.registerFont('GSansRegular', path.join(__dirname, '../assets/GoogleSans-Regular.ttf'))
+  medidor.registerFont('GSansBold', path.join(__dirname, '../assets/GoogleSans-Bold.ttf'))
+  medidor.registerFont('GSansItalic', path.join(__dirname, '../assets/GoogleSans-MediumItalic.ttf'))
 
-  let extra = 0
-  if (Number(factura.descuento) > 0) extra += 15
-  if (factura.tiene_trucha) extra += 30
+  let alto = 10
 
-  const alto = ALTO_BASE + (factura.items.length * ALTO_POR_ITEM) + extra
+  const logoPath = path.join(__dirname, '../assets/LogoTSI.png')
+  if (fs.existsSync(logoPath)) alto += 70
 
-  // Mínimo de seguridad para facturas muy cortas, máximo razonable para evitar rollos gigantes accidentales
-  return Math.max(500, Math.min(alto, 3000))
+  alto += 18 // nombre restaurante
+  alto += 18 // "RESTAURANTE"
+
+  const headerInfo = [
+    process.env.RESTAURANTE_EMAIL,
+    process.env.RESTAURANTE_WEB,
+    process.env.RESTAURANTE_TEL,
+    process.env.RESTAURANTE_DIRECCION,
+  ]
+  headerInfo.forEach(line => { if (line) alto += 10 })
+  alto += 8
+
+  alto += 12 * 3 + 17 // Factura #, fecha, mesa, cliente
+  alto += 8 // línea + espacio
+
+  alto += 12 + 6 // encabezado de columnas + línea
+
+  for (const item of factura.items) {
+    alto += alturaItem(medidor, item) + 6
+  }
+
+  alto += 5 + 8 // línea final de items + espacio
+
+  alto += 17 * 2 // subtotal + servicio
+  if (Number(factura.descuento) > 0) alto += 17
+  if (factura.tiene_trucha) alto += 12 + 14
+
+  alto += 8 // línea + espacio
+  alto += 25 // TOTAL
+  alto += 20 // mensaje final
+
+  medidor.end()
+
+  return Math.max(500, Math.min(Math.ceil(alto) + 20, 3000))
 }
 
 /* =========================
@@ -152,23 +201,32 @@ const generarPDF = async (factura) => {
   doc.moveTo(0, y).lineTo(215, y).stroke()
   y += 8
 
-  /* =========================
-     ITEMS
+/* =========================
+     ITEMS (tabla: Cant | Descripción | Total)
   ========================= */
-  for (const item of factura.items) {
-    const desc = `${item.cantidad}× ${item.descripcion}`
+  doc.font('GSansBold').fontSize(9)
+  doc.text('Cant', COL_CANT_X, y, { width: COL_CANT_W, align: 'center' })
+  doc.text('Descripción', COL_DESC_X, y, { width: COL_DESC_W })
+  doc.text('Total', COL_TOTAL_X, y, { width: COL_TOTAL_W, align: 'right' })
+  y += 12
+  doc.moveTo(10, y).lineTo(205, y).stroke()
+  y += 6
+
+for (const item of factura.items) {
     const total = fmt(item.total)
 
-    doc.font('GSansRegular').fontSize(12)
-    doc.text(desc, 10, y, { width: 130 })
-    doc.text(total, 10, y, { width: 195, align: 'right' })
+    doc.font('GSansRegular').fontSize(11)
+    const altoDesc = doc.heightOfString(item.descripcion, { width: COL_DESC_W })
 
-    y += 12
+    doc.text(String(item.cantidad), COL_CANT_X, y, { width: COL_CANT_W, align: 'center' })
+    doc.text(item.descripcion, COL_DESC_X, y, { width: COL_DESC_W })
+    doc.text(total, COL_TOTAL_X, y, { width: COL_TOTAL_W, align: 'right' })
+
+    y += altoDesc - 1
 
     doc.font('GSansItalic').fontSize(8)
-    doc.text(`Precio: ${fmt(item.precio_unitario)}`, 20, y)
-
-    y += 14
+    doc.text(`Precio unitario: ${fmt(item.precio_unitario)}`, COL_DESC_X, y)
+    y += 12
   }
 
   y += 5

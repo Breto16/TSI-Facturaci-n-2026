@@ -39,9 +39,13 @@ export default function ConsultasPage() {
     }
   }, [])
 
-  useEffect(() => {
+useEffect(() => {
     cargarConsultasRapidas()
-    getSaloneros().then(setSaloneros)
+    getSaloneros().then(data => {
+      setSaloneros(data)
+      const noAsignado = data.find(s => s.nombre.trim().toLowerCase() === 'no asignado')
+      if (noAsignado) setSaloneroId(String(noAsignado.id))
+    })
   }, [cargarConsultasRapidas])
 
   useEffect(() => {
