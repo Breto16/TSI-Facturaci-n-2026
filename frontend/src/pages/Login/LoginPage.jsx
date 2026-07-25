@@ -4,6 +4,7 @@ import { Form, Button, Alert, Spinner } from 'react-bootstrap';
 import { User, Lock, UtensilsCrossed } from 'lucide-react';
 import { loginRequest } from '../../services/authService';
 import { useAuth } from '../../context/AuthContext';
+import LogoIcon from '../../components/common/LogoIcon'
 
 const LoginPage = () => {
   const [usuario, setUsuario] = useState('');
@@ -38,24 +39,26 @@ const LoginPage = () => {
         className="app-surface p-4 shadow-sm"
         style={{ width: '360px' }}
       >
-        <div className="d-flex flex-column align-items-center mb-4">
+        <div className="d-flex flex-column align-items-center mb-0">
           <div
-            className="d-flex align-items-center justify-content-center mb-2"
+            className="d-flex align-items-center justify-content-center mb-1"
             style={{
-              width: '56px',
-              height: '56px',
+              width: '200px',
+              height: '85px',
               borderRadius: '14px',
-              backgroundColor: 'var(--color-primary)',
+              backgroundColor: 'transparent',
+              color: 'var(--color-primary)',
             }}
           >
-            <UtensilsCrossed size={28} color="#ffffff" />
+            <LogoIcon size={110} color="var(--color-primary)" />
+            {/* <img src="/LogoTSIN.svg" alt="Logo" style={{ width: 100, height: 100 }} /> */}
           </div>
-          <h4 className="mb-0" style={{ color: 'var(--color-text)', fontWeight: 700 }}>
-            TSI Facturación
+          <h4 className="mb-0" style={{ color: 'var(--color-primary)', fontWeight: 700 }}>
+            Truchas San Ignacio
           </h4>
-          <span className="app-text-secondary" style={{ fontSize: '0.85rem' }}>
-            Inicia sesión para continuar
-          </span>
+          <h6 className="mb-0" style={{ color: 'var(--color-text-secondary)', fontWeight: 500 }}>
+            Facturación
+          </h6>
         </div>
 
         {error && <Alert variant="danger" className="py-2">{error}</Alert>}

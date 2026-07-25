@@ -25,7 +25,7 @@ export default function ModalPasswordCierre({ show, onValidado, onCancelar }) {
   return (
     <Modal show={show} centered animation={false} onHide={onCancelar} contentClassName="border-0 bg-transparent">
       <div style={{ borderRadius: 16, overflow: 'hidden' }}>
-        <div style={{ background: GRADIENTS.rojo, padding: '1.25rem 1.5rem' }}>
+        <div style={{ background: 'var(--color-danger)', padding: '1.25rem 1.5rem' }}>
           <div className="d-flex align-items-center gap-2">
             <Lock size={20} color="white" />
             <span className="fw-bold text-white fs-5">Acceso a Cierre</span>
@@ -56,7 +56,7 @@ export default function ModalPasswordCierre({ show, onValidado, onCancelar }) {
             <button
               onClick={handleValidar}
               disabled={validando || !password}
-              style={{ flex: 1, background: GRADIENTS.rojo, border: 'none', borderRadius: 8, padding: '10px', color: 'white', fontWeight: 600, cursor: 'pointer', opacity: (validando || !password) ? 0.6 : 1 }}
+              style={{ flex: 1, background: 'var(--color-danger)', border: 'none', borderRadius: 8, padding: '10px', color: 'white', fontWeight: 600, cursor: 'pointer', opacity: (validando || !password) ? 0.6 : 1 }}
             >
               {validando ? 'Verificando...' : 'Entrar'}
             </button>

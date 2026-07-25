@@ -53,7 +53,7 @@ const esEditable = (estado) => estado === 'abierta' || estado === 'impresa'
 const ModalConfirmacion = ({ show, onHide, titulo, descripcion, onConfirmar, colorBtn, textoBtn, procesando }) => (
     <Modal show={show} onHide={onHide} centered animation={false} contentClassName="border-0 bg-transparent">
         <div style={{ borderRadius: 16, overflow: 'hidden' }}>
-            <div style={{ background: colorBtn, padding: '1.25rem 1.5rem', color:'var(--color-text-bg)' }}>
+            <div style={{ background: colorBtn, padding: '1.25rem 1.5rem', color: 'var(--color-text-bg)' }}>
                 <div className="d-flex align-items-center justify-content-between">
                     <span className="fw-bold fs-5">{titulo}</span>
                     <button onClick={onHide} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
@@ -745,11 +745,18 @@ export default function FacturaPage() {
                             {/* Servicio: editable con checkbox, readonly como texto */}
                             {editable ? (
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem' }}>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--color-text-secondary)', cursor: 'pointer' }}>
-                                        <input type="checkbox" checked={cobrarServicio} onChange={handleToggleServicio} />
-                                        Servicio 10%
+                                    <span style={{ color: 'var(--color-text-secondary)' }}>Servicio 10%</span>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={cobrarServicio}
+                                            onChange={handleToggleServicio}
+                                            style={{ accentColor: 'var(--color-primary)', width: 16, height: 16, flexShrink: 0 }}
+                                        />
+                                        <span style={{ display: 'inline-block', width: 60, textAlign: 'right', flexShrink: 0 }}>
+                                            ₡{Number(factura.servicio).toLocaleString('es-CR')}
+                                        </span>
                                     </label>
-                                    <span>₡{Number(factura.servicio).toLocaleString('es-CR')}</span>
                                 </div>
                             ) : (
                                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>

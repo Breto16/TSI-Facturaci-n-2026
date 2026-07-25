@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Search } from 'lucide-react'
 import { getProductos } from '../../../services/productosService'
+import { normalizarTexto } from '../../../utils/texto'
 
 const construirOpciones = (productos) => {
   const opciones = []
@@ -57,7 +58,7 @@ export default function SelectorProductosComanda({ onSeleccionar, focusTrigger }
   }, [focusTrigger])
 
   const filtrados = opciones.filter(o =>
-    o.label.toLowerCase().includes(busqueda.toLowerCase())
+    normalizarTexto(o.label).includes(normalizarTexto(busqueda))
   )
 
   const handleKeyDown = useCallback((e) => {

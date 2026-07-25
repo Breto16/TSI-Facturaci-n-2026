@@ -5,9 +5,9 @@ const { generarJWT } = require('../helpers/jwt');
 
 const login = async (req, res) => {
   const { usuario, password } = req.body;
-
+  const usuarioNormalizado = (usuario || '').trim();
   try {
-    const user = await Usuario.buscarPorUsuario(usuario);
+    const user = await Usuario.buscarPorUsuario(usuarioNormalizado);
 
     if (!user) {
       return res.status(400).json({ msg: 'Usuario o contraseña incorrectos' });
@@ -60,9 +60,10 @@ const getUsuarios = async (req, res) => {
 
 const postUsuario = async (req, res) => {
   const { nombre, usuario, password, rol } = req.body;
+  const usuarioNormalizado = (usuario || '').trim().toLowerCase();
 
   try {
-    const existe = await Usuario.buscarPorUsuario(usuario);
+    const existe = await Usuario.buscarPorUsuario(usuarioNormalizado);
 
     if (existe) {
       return res.status(400).json({ msg: 'Ese nombre de usuario ya existe' });
@@ -71,7 +72,7 @@ const postUsuario = async (req, res) => {
     const salt = bcrypt.genSaltSync();
     const passwordHash = bcrypt.hashSync(password, salt);
 
-    const nuevo = await Usuario.crear({ nombre, usuario, passwordHash, rol });
+    const nuevo = await Usuario.crear({ nombre, usuario: usuarioNormalizado, passwordHash, rol });
     res.json(nuevo);
 
   } catch (error) {

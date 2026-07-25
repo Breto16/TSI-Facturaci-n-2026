@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Search } from 'lucide-react'
 import { getProductos } from '../../../services/productosService'
+import { normalizarTexto } from '../../../utils/texto'
 
 export default function SelectorProductos({ onSeleccionar, focusTrigger }) {
   const [productos, setProductos] = useState([])
@@ -23,8 +24,8 @@ export default function SelectorProductos({ onSeleccionar, focusTrigger }) {
   }, [focusTrigger])
 
   const filtrados = productos.filter(p =>
-    p.descripcion.toLowerCase().includes(busqueda.toLowerCase()) ||
-    (p.codigo || '').toLowerCase().includes(busqueda.toLowerCase()) ||
+    normalizarTexto(p.descripcion).includes(normalizarTexto(busqueda)) ||
+    normalizarTexto(p.codigo || '').includes(normalizarTexto(busqueda)) ||
     String(p.precio).includes(busqueda)
   )
 
