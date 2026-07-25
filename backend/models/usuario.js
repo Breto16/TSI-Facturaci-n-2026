@@ -5,7 +5,7 @@ const buscarPorUsuario = async (usuario) => {
     SELECT u.id, u.nombre, u.usuario, u.password_hash, u.rol, u.activo, s.id AS salonero_id
     FROM usuarios u
     LEFT JOIN saloneros s ON s.usuario_id = u.id
-    WHERE u.usuario = $1
+    WHERE LOWER(u.usuario) = LOWER($1)
   `, [usuario]);
   return rows[0];
 };

@@ -374,21 +374,7 @@ const handleClickMesa = async (numero) => {
               ))}
             </div>
 
-            <button
-              onClick={cargarMesas}
-              disabled={cargando}
-              style={{
-                background: 'transparent',
-                border: '1px solid var(--color-btn-secondary-border)',
-                borderRadius: 8,
-                padding: '5px 14px',
-                fontSize: '0.78rem',
-                cursor: 'pointer',
-                color: 'var(--color-btn-secondary-text)',
-              }}
-            >
-              Actualizar
-            </button>
+            
           </div>
         </>
       )}

@@ -86,34 +86,64 @@ export default function ModalConfigurarCierre({ show, onHide, seleccionadas, onC
             </div>
           )}
 
-          <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid var(--color-border)' }}>
-            <span className="fw-semibold small" style={{ color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: 1 }}>
-              Cambiar contraseña de acceso
-            </span>
-            <div className="d-flex flex-column gap-2 mt-2">
-              <input
-                type="password"
-                placeholder="Contraseña actual"
-                value={passwordActual}
-                onChange={e => setPasswordActual(e.target.value)}
-                style={{ width: '100%', padding: '7px 10px', borderRadius: 8, border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '0.85rem' }}
-              />
-              <input
-                type="password"
-                placeholder="Contraseña nueva"
-                value={passwordNueva}
-                onChange={e => setPasswordNueva(e.target.value)}
-                style={{ width: '100%', padding: '7px 10px', borderRadius: 8, border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '0.85rem' }}
-              />
-              <button
-                onClick={handleCambiarPassword}
-                disabled={cambiandoPassword || !passwordActual || !passwordNueva}
-                style={{ width: '100%', background: 'var(--color-primary)', border: 'none', borderRadius: 8, padding: '7px', color: 'var(--color-text-bg)', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', opacity: (cambiandoPassword || !passwordActual || !passwordNueva) ? 0.6 : 1 }}
-              >
-                {cambiandoPassword ? 'Cambiando...' : 'Cambiar contraseña'}
-              </button>
-            </div>
-          </div>
+          <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid var(--color-border)', width: '100%' }}>
+  <span className="fw-semibold small" style={{ color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: 1 }}>
+    Cambiar contraseña de acceso
+  </span>
+  <div className="d-flex gap-2 mt-2" style={{ flexWrap: 'wrap' }}>
+    <input
+      type="password"
+      placeholder="Contraseña actual"
+      value={passwordActual}
+      onChange={e => setPasswordActual(e.target.value)}
+      style={{ 
+        flex: '1 1 120px', // Crece, se encoge, y tiene una base mínima de 120px
+        minWidth: 0,       // Crucial para evitar que flexbox fuerce desbordamiento
+        padding: '7px 10px', 
+        borderRadius: 8, 
+        border: '1px solid var(--color-border)', 
+        background: 'var(--color-background)', 
+        color: 'var(--color-text)', 
+        fontSize: '0.85rem' 
+      }}
+    />
+    <input
+      type="password"
+      placeholder="Contraseña nueva"
+      value={passwordNueva}
+      onChange={e => setPasswordNueva(e.target.value)}
+      style={{ 
+        flex: '1 1 120px', 
+        minWidth: 0, 
+        padding: '7px 10px', 
+        borderRadius: 8, 
+        border: '1px solid var(--color-border)', 
+        background: 'var(--color-background)', 
+        color: 'var(--color-text)', 
+        fontSize: '0.85rem' 
+      }}
+    />
+    <button
+      onClick={handleCambiarPassword}
+      disabled={cambiandoPassword || !passwordActual || !passwordNueva}
+      style={{ 
+        flexShrink: 0, 
+        background: 'var(--color-primary)', 
+        border: 'none', 
+        borderRadius: 8, 
+        padding: '7px 16px', 
+        color: 'var(--color-text-bg)', 
+        fontSize: '0.85rem', 
+        fontWeight: 600, 
+        cursor: 'pointer', 
+        opacity: (cambiandoPassword || !passwordActual || !passwordNueva) ? 0.6 : 1, 
+        whiteSpace: 'nowrap' 
+      }}
+    >
+      {cambiandoPassword ? 'Cambiando...' : 'Cambiar'}
+    </button>
+  </div>
+</div>
 
           <div className="d-flex justify-content-end mt-4">
             <button
