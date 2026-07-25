@@ -6,10 +6,10 @@ import { useAuth } from '../../context/AuthContext';
 import ThemeToggle from '../common/ThemeToggle';
 
 const NAV_LINKS = [
-  { to: '/inicio', label: 'Inicio' },
+  { to: '/inicio', label: 'Inicio', roles: ['admin', 'cajero'] },
   { to: '/mesas', label: 'Mesas' },
   { to: '/validacion', label: 'Validación' },
-  { to: '/cierre', label: 'Cierre' },
+  { to: '/cierre', label: 'Cierre', roles: ['admin'] },
 ];
 
 const Navbar = () => {
@@ -29,6 +29,10 @@ const Navbar = () => {
     alignItems: 'center',
     gap: '6px',
   };
+
+  const linksVisibles = NAV_LINKS.filter(
+    (link) => !link.roles || link.roles.includes(usuario?.rol)
+  );
 
   return (
     <BsNavbar
@@ -72,7 +76,7 @@ const Navbar = () => {
         </BsNavbar.Brand>
 
         <Nav className="d-none d-lg-flex gap-2">
-          {NAV_LINKS.map((link) => (
+          {linksVisibles.map((link) => (
             <Nav.Link key={link.to} as={Link} to={link.to} style={linkStyle}>
               {link.label}
             </Nav.Link>
@@ -121,7 +125,7 @@ const Navbar = () => {
           }}
         >
           <Nav className="flex-column gap-1">
-            {NAV_LINKS.map((link) => (
+            {linksVisibles.map((link) => (
               <Nav.Link
                 key={link.to}
                 as={Link}
