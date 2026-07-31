@@ -10,7 +10,7 @@ const ESTADO_COLOR = {
 const LONG_PRESS_MS = 800
 const UMBRAL_MOVIMIENTO = 10 // px — más que esto se considera scroll, no tap
 
-export default function MesaCard({ mesa, numero, onClick, onLongPress, size = 72, mobile = false }) {
+export default function MesaCard({ mesa, numero, onClick, onLongPress, size = 72, mobile = false, ancho = false }) {
   const [hover, setHover] = useState(false)
   const [progreso, setProgreso] = useState(false)
   const timerRef = useRef(null)
@@ -83,9 +83,11 @@ export default function MesaCard({ mesa, numero, onClick, onLongPress, size = 72
 
   useEffect(() => () => clearTimeout(timerRef.current), [])
 
-  const estiloContenedor = mobile
-    ? { width: '100%', height: '100%', aspectRatio: '1' }
-    : { width: size, height: size }
+  const estiloContenedor = ancho
+    ? { width: '100%', height: 56 }
+    : mobile
+      ? { width: '100%', height: '100%', aspectRatio: '1' }
+      : { width: size, height: size }
 
   return (
     <div
@@ -110,13 +112,13 @@ export default function MesaCard({ mesa, numero, onClick, onLongPress, size = 72
             : 'var(--color-surface)',
         cursor: 'pointer',
         display: 'flex',
-        flexDirection: 'column',
+        flexDirection: ancho ? 'row' : 'column',
         alignItems: 'center',
         justifyContent: 'center',
         transition: progreso
           ? `background-color ${LONG_PRESS_MS}ms linear`
           : 'background-color 0.15s ease',
-        gap: 2,
+        gap: ancho ? 8 : 2,
         boxShadow: hover || progreso ? `0 4px 12px ${color}44` : 'none',
         userSelect: 'none',
         WebkitUserSelect: 'none',
@@ -125,7 +127,7 @@ export default function MesaCard({ mesa, numero, onClick, onLongPress, size = 72
       }}
     >
       <span style={{
-        fontSize: mobile ? '4vw' : `${Math.round(size * 0.22)}px`,
+        fontSize: ancho ? '1.4rem' : mobile ? '4vw' : `${Math.round(size * 0.22)}px`,
         fontWeight: 700,
         color: color,
         lineHeight: 1,
@@ -135,7 +137,7 @@ export default function MesaCard({ mesa, numero, onClick, onLongPress, size = 72
       </span>
       {mesa?.facturas_activas > 0 && (
         <span style={{
-          fontSize: mobile ? '2.5vw' : `${Math.round(size * 0.13)}px`,
+          fontSize: ancho ? '0.85rem' : mobile ? '2.5vw' : `${Math.round(size * 0.13)}px`,
           color: color,
           fontWeight: 600,
           lineHeight: 1,
