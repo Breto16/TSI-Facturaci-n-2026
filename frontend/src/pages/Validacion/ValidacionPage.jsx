@@ -18,7 +18,7 @@ const formatoItem = (item) => {
   return texto
 }
 
-const audioNotificacion = new Audio('/sounds/notificacion.wav')
+const audioNotificacion = new Audio('/sounds/N2.mp3')
 
 const reproducirBeep = () => {
   audioNotificacion.currentTime = 0
@@ -58,11 +58,8 @@ export default function ValidacionPage() {
 
     const handleComandaNueva = (comanda) => {
       setComandas(prev => [...prev, comanda])
-      if (comanda.items?.some(i => i.categoria === 'cocina')) {
-        reproducirBeep()
-      }
+      reproducirBeep()
     }
-
     const handleItemActualizado = (item) => {
       setComandas(prev => prev.map(c => c.id !== item.comanda_id ? c : {
         ...c,

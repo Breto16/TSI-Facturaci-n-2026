@@ -57,6 +57,14 @@ const BLOQUE_C = {
   ],
 }
 
+const GRUPOS_MOVIL = [
+  { numeros: [1, 2, 3, 4, 5, 6, 7, 8] },
+  { numeros: [9, 10, 11, 12] },
+  { numeros: [21, 22, 23, 24, 25, 26, 27, 28] },
+  { numeros: [31, 32, 33, 34, 35] },
+
+]
+
 const BloqueGrid = ({ bloque, getMesa, onClickMesa, onLongPressMesa, celdaSize, gap }) => (
   <div
     style={{
@@ -310,26 +318,24 @@ const handleClickMesa = async (numero) => {
               <BloqueGrid bloque={BLOQUE_B} {...gridProps} />
               <BloqueGrid bloque={BLOQUE_C} {...gridProps} />
             </div>
-
-            <div
+<div
               className="d-md-none"
               style={{ overflowY: 'auto', width: '100%', padding: '8px' }}
             >
-              {[BLOQUE_A, BLOQUE_D, BLOQUE_B, BLOQUE_C].map((bloque, i) => (
-                <div key={i} style={{ marginBottom: 12 }}>
-                  <div style={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: 8,
-                    padding: 12,
-                    borderRadius: 16,
-                    border: '2px solid var(--color-border)',
-                    backgroundColor: 'var(--color-surface)',
-                  }}>
-                    {bloque.celdas.filter(num => num !== null).map((num, ci) => (
-                      <div key={ci} style={{ width: 'calc(25% - 6px)' }}>
+              
+
+              {GRUPOS_MOVIL.map((grupo, i) => (
+                <div key={i} style={{
+                  marginBottom: 12,
+                  borderRadius: 16,
+                  padding: 12,
+                  border: '2px solid var(--color-border)',
+                  backgroundColor: 'var(--color-surface)',
+                }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {grupo.numeros.map(num => (
+                      <div key={num} style={{ width: 'calc(25% - 6px)' }}>
                         <MesaCard
-                          key={ci}
                           mesa={getMesa(num)}
                           numero={num}
                           onClick={() => handleClickMesa(num)}
@@ -342,6 +348,15 @@ const handleClickMesa = async (numero) => {
                   </div>
                 </div>
               ))}
+              <div style={{ marginBottom: 12 }}>
+                <MesaCard
+                  mesa={getMesa(0)}
+                  numero={0}
+                  onClick={() => handleClickMesa(0)}
+                  onLongPress={() => handleLongPress(0)}
+                  ancho
+                />
+              </div>
             </div>
           </div>
 

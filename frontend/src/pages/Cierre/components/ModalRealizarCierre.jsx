@@ -13,7 +13,7 @@ export default function ModalRealizarCierre({
   const [efectivoContado, setEfectivoContado] = useState('')
   const [guardando, setGuardando] = useState(false)
 
-  const totalSistema = Number(totales?.total_general || 0)
+  const totalSistema = Number(totales?.total_general || 0) + Number(totales?.total_trucha || 0)
   const totalTrucha = Number(totales?.total_trucha || 0)
   const efectivoSistema = totalSistema - (parseFloat(tarjeta) || 0)
   const diferencia = (parseFloat(efectivoContado) || 0) +
