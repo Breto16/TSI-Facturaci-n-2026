@@ -40,5 +40,8 @@ const emitirItemEliminado = (itemId) => {
 const emitirComandaVaciada = (comandaId) => {
   io?.emit('comanda:vaciada', { comandaId })
 }
+const emitirItemsAgregados = (comandaId, items) => {
+  io?.emit('comanda-items:agregados', { comandaId, items })
+}
 
-module.exports = { initSocket, emitirComandaNueva, emitirItemActualizado, emitirMesasActualizadas, emitirFacturaActualizada, emitirItemEliminado, emitirComandaVaciada }
+module.exports = { initSocket, emitirComandaNueva, emitirItemActualizado, emitirMesasActualizadas, emitirFacturaActualizada, emitirItemEliminado, emitirComandaVaciada, emitirItemsAgregados }

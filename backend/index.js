@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const http = require('http');
+const https = require('https');
+const fs = require('fs');
 require('dotenv').config();
 
 const pool = require('./db/connection');
@@ -20,7 +22,8 @@ const comandasRoutes = require('./routes/comandas')
 
 
 const app = express();
-const PORT = process.env.PORT || 4000;
+const HTTPS_PORT = process.env.HTTPS_PORT || 4443;
+const HTTP_PORT = process.env.PORT || 4000;
 
 app.use(cors());
 app.use((req, res, next) => {
@@ -57,9 +60,36 @@ pool.query('SELECT NOW()')
     console.log('No se pudo conectar a la BD');
   });
 
-const server = http.createServer(app)
-initSocket(server)
+// Certificados generados con mkcert, necesarios para HTTPS en la LAN local.
+const certPath = path.join(__dirname, 'certs')
+const certFiles = fs.readdirSync(certPath)
+const keyFile = certFiles.find(f => f.endsWith('-key.pem'))
+const certFile = certFiles.find(f => f.endsWith('.pem') && !f.endsWith('-key.pem'))
 
-server.listen(PORT, () => {
-  console.log(`Servidor corriendo en puerto ${PORT}`);
+if (!keyFile || !certFile) {
+  throw new Error('No se encontraron certificados en ./certs, no se puede iniciar HTTPS')
+}
+
+const httpsOptions = {
+  key: fs.readFileSync(path.join(certPath, keyFile)),
+  cert: fs.readFileSync(path.join(certPath, certFile)),
+}
+
+// Servidor HTTPS: el unico que sirve la aplicacion real.
+const httpsServer = https.createServer(httpsOptions, app)
+initSocket(httpsServer)
+
+httpsServer.listen(HTTPS_PORT, () => {
+  console.log(`Servidor HTTPS corriendo en puerto ${HTTPS_PORT}`);
+});
+
+// Servidor HTTP: no sirve la app, solo redirige a HTTPS.
+// Cubre el caso de alguien escribiendo la URL vieja sin "https://".
+const redirectApp = express()
+redirectApp.use((req, res) => {
+  res.redirect(`https://${req.hostname}:${HTTPS_PORT}${req.url}`)
+})
+
+http.createServer(redirectApp).listen(HTTP_PORT, () => {
+  console.log(`Servidor HTTP (solo redireccion) corriendo en puerto ${HTTP_PORT}`);
 });

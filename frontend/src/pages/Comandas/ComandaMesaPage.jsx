@@ -1,18 +1,20 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Spinner, Modal } from 'react-bootstrap'
-import { ArrowLeft, Plus, Minus, Trash2, Send, CheckCircle2, Circle, Check } from 'lucide-react'
+import { ArrowLeft, Plus, Minus, Trash2, Send, CheckCircle2, Circle, Check, Ban, Printer } from 'lucide-react'
 import { sileo } from 'sileo'
 import { useAuth } from '../../context/AuthContext'
 import SelectorProductosComanda from './components/SelectorProductosComanda'
 import ModalDetalleItem from './components/ModalDetalleItem'
-import { getComandasPorFactura, crearComanda } from '../../services/comandasService'
+import ModalFichaComanda from './components/ModalFichaComanda'
+import ModalConfirmarAccion from '../../components/common/ModalConfirmarAccion'
+import {
+  getComandasPorFactura, crearComanda, agregarItemsComanda,
+  cancelarItemComanda, ajustarCantidadItemComanda, reimprimirComanda,
+} from '../../services/comandasService'
 import { getFactura, actualizarDetalle } from '../../services/facturasService'
 import { formatoTranscurrido, colorTranscurrido } from '../../utils/tiempo'
-
-const ACOMPANAMIENTO_LABEL = {
-  yuca: 'Yuca', papa: 'Papa', patacon: 'Patacón', especial: 'Especial', solo: 'Solo(a)',
-}
+import { ACOMPANAMIENTO_LABEL } from '../../constants/acompanamientos'
 
 const formatoItem = (item) => {
   let texto = `${item.cantidad}× ${item.descripcion}`
@@ -20,6 +22,7 @@ const formatoItem = (item) => {
   if (item.acompanamiento) texto += ` con ${ACOMPANAMIENTO_LABEL[item.acompanamiento] || item.acompanamiento}`
   return texto
 }
+
 const ToggleBoton = ({ pregunta, valor, onChange }) => (
   <button
     type="button"
@@ -45,6 +48,15 @@ const ToggleBoton = ({ pregunta, valor, onChange }) => (
   </button>
 )
 
+// Une un item nuevo con uno ya existente en el carrito si comparte
+// producto/variante/acompañamiento/detalle/saleAntes — evita duplicar fila.
+const clavesIguales = (a, b) =>
+  a.productoId === b.productoId &&
+  (a.variante || null) === (b.variante || null) &&
+  (a.acompanamiento || null) === (b.acompanamiento || null) &&
+  (a.detalle || null) === (b.detalle || null) &&
+  !!a.saleAntes === !!b.saleAntes
+
 export default function ComandaMesaPage() {
   const { facturaId } = useParams()
   const navigate = useNavigate()
@@ -66,6 +78,12 @@ export default function ComandaMesaPage() {
   const [imprimirSalon, setImprimirSalon] = useState(false)
   const nombreCuentaRef = useRef(null)
   const numeroFichaRef = useRef(null)
+
+  const [comandaAgregando, setComandaAgregando] = useState(null)
+  const [itemPendienteAgregar, setItemPendienteAgregar] = useState(null)
+  const [modalFicha, setModalFicha] = useState(false)
+  const [modalCancelar, setModalCancelar] = useState(null)
+  const [procesandoReimprimir, setProcesandoReimprimir] = useState(null)
 
   const cargarTodo = useCallback(async () => {
     setCargando(true)
@@ -93,7 +111,6 @@ export default function ComandaMesaPage() {
     return () => clearInterval(id)
   }, [])
 
-  // Protección contra pérdida accidental de la comanda sin enviar
   useEffect(() => {
     if (carrito.length === 0) return
 
@@ -103,8 +120,6 @@ export default function ComandaMesaPage() {
     }
     window.addEventListener('beforeunload', handleBeforeUnload)
 
-    // Entrada "centinela" en el historial: si el usuario usa el botón
-    // atrás del navegador/dispositivo, primero cae acá y le preguntamos.
     window.history.pushState(null, '', window.location.href)
 
     const handlePopState = () => {
@@ -139,11 +154,58 @@ export default function ComandaMesaPage() {
     setVarianteActiva(opcion.variante)
   }
 
+  const confirmarAgregarAComandaExistente = async (item, ficha) => {
+    const comandaId = comandaAgregando
+    setModalFicha(false)
+    setItemPendienteAgregar(null)
+    setComandaAgregando(null)
+    if (!comandaId) return
+    try {
+      await agregarItemsComanda(comandaId, [item], ficha)
+      sileo.success({ title: 'Item agregado', description: 'Se agregó a la comanda. Usá "Reimprimir" cuando quieras enviar el papel actualizado.' })
+      cargarTodo()
+    } catch (err) {
+      sileo.error({ title: 'Error', description: err.response?.data?.msg || 'No se pudo agregar el item' })
+    }
+  }
+
   const handleConfirmarItem = (item) => {
+    if (comandaAgregando) {
+      const comandaObjetivo = historial.find(c => c.id === comandaAgregando)
+      const necesitaFichaExistente = !!productoActivo?.requiere_ficha && !comandaObjetivo?.ficha
+
+      setItemPendienteAgregar(item)
+      setProductoActivo(null)
+      setVarianteActiva(null)
+
+      if (necesitaFichaExistente) {
+        setModalFicha(true)
+      } else {
+        confirmarAgregarAComandaExistente(item, null)
+      }
+      return
+    }
+
     const requiereFicha = !!productoActivo?.requiere_ficha
-    setCarrito(prev => [...prev, { ...item, uid: Date.now() + Math.random(), requiereFicha }])
+    const nuevoItem = { ...item, requiereFicha }
+
+    setCarrito(prev => {
+      const idx = prev.findIndex(i => clavesIguales(i, nuevoItem))
+      if (idx >= 0) {
+        const copia = [...prev]
+        copia[idx] = { ...copia[idx], cantidad: copia[idx].cantidad + nuevoItem.cantidad }
+        return copia
+      }
+      return [...prev, { ...nuevoItem, uid: Date.now() + Math.random() }]
+    })
     setProductoActivo(null)
     setVarianteActiva(null)
+  }
+
+  const handleAgregarAComandaExistente = (comandaId) => {
+    setComandaAgregando(comandaId)
+    setFocusTrigger(f => f + 1)
+    setModalSelector(true)
   }
 
   const quitarDelCarrito = (uid) => {
@@ -194,9 +256,40 @@ export default function ComandaMesaPage() {
     }
   }
 
+  const handleCancelarItemHistorial = async (itemId) => {
+    setModalCancelar(null)
+    try {
+      await cancelarItemComanda(itemId)
+      cargarTodo()
+    } catch {
+      sileo.error({ title: 'Error', description: 'No se pudo cancelar el item' })
+    }
+  }
+
+  const handleAjustarCantidadHistorial = async (itemId, delta) => {
+    try {
+      await ajustarCantidadItemComanda(itemId, delta)
+      cargarTodo()
+    } catch {
+      sileo.error({ title: 'Error', description: 'No se pudo ajustar la cantidad' })
+    }
+  }
+
+  const handleReimprimirHistorial = async (comandaId, tipo) => {
+    setProcesandoReimprimir(`${comandaId}-${tipo}`)
+    try {
+      await reimprimirComanda(comandaId, tipo)
+      sileo.success({ title: 'Enviado', description: `Ticket de ${tipo === 'cocina' ? 'cocina' : 'salón'} enviado a imprimir` })
+    } catch {
+      sileo.error({ title: 'Error', description: 'No se pudo reimprimir' })
+    } finally {
+      setProcesandoReimprimir(null)
+    }
+  }
+
   const historialOrdenado = [...historial].sort((a, b) => {
-    const aCompleta = a.items.every(i => i.despachado)
-    const bCompleta = b.items.every(i => i.despachado)
+    const aCompleta = a.items.every(i => i.despachado || i.cancelado)
+    const bCompleta = b.items.every(i => i.despachado || i.cancelado)
     if (aCompleta !== bCompleta) return aCompleta ? 1 : -1
     return new Date(a.creado_en) - new Date(b.creado_en)
   })
@@ -258,7 +351,7 @@ export default function ComandaMesaPage() {
           <div style={{ height: '100%', display: 'flex', flexDirection: 'column', gap: 12 }}>
 
             <button
-              onClick={() => { setFocusTrigger(f => f + 1); setModalSelector(true) }}
+              onClick={() => { setComandaAgregando(null); setFocusTrigger(f => f + 1); setModalSelector(true) }}
               style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '16px', borderRadius: 12, border: '2px dashed var(--color-primary)', background: 'transparent', color: 'var(--color-primary)', cursor: 'pointer', fontSize: '1.05rem', fontWeight: 700 }}
             >
               <Plus size={20} /> Agregar producto
@@ -415,7 +508,7 @@ export default function ComandaMesaPage() {
               ) : (
                 <div className="d-flex flex-column gap-2">
                   {historialOrdenado.map(c => {
-                    const completa = c.items.every(i => i.despachado)
+                    const completa = c.items.every(i => i.despachado || i.cancelado)
                     const transcurrido = ahora - new Date(c.creado_en).getTime()
                     return (
                       <div key={c.id} style={{ borderRadius: 12, border: '1px solid var(--color-border)', padding: '10px 14px', background: 'var(--color-surface)', opacity: completa ? 0.6 : 1 }}>
@@ -435,16 +528,72 @@ export default function ComandaMesaPage() {
                           </div>
                         )}
                         <div className="d-flex flex-column gap-1">
-                          {c.items.map(item => (
-                            <div key={item.id} className="d-flex align-items-center gap-2">
-                              {item.despachado
-                                ? <CheckCircle2 size={15} color="var(--color-success)" />
-                                : <Circle size={15} color="var(--color-text-secondary)" />}
-                              <span style={{ fontSize: '0.85rem', color: item.despachado ? 'var(--color-text-secondary)' : 'var(--color-text)' }}>
-                                {formatoItem(item)}
-                              </span>
-                            </div>
-                          ))}
+                          {c.items.map(item => {
+                            if (item.cancelado) {
+                              return (
+                                <div key={item.id} className="d-flex align-items-center gap-2" style={{ opacity: 0.65 }}>
+                                  <span style={{ fontSize: '0.68rem', fontWeight: 700, color: 'var(--color-danger)', flexShrink: 0 }}>CANCELADO</span>
+                                  <span style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', textDecoration: 'line-through' }}>
+                                    {formatoItem(item)}
+                                  </span>
+                                </div>
+                              )
+                            }
+                            return (
+                              <div key={item.id} className="d-flex align-items-center justify-content-between gap-2">
+                                <div className="d-flex align-items-center gap-2">
+                                  {item.despachado
+                                    ? <CheckCircle2 size={15} color="var(--color-success)" />
+                                    : <Circle size={15} color="var(--color-text-secondary)" />}
+                                  <span style={{ fontSize: '0.85rem', color: item.despachado ? 'var(--color-text-secondary)' : 'var(--color-text)' }}>
+                                    {formatoItem(item)}
+                                  </span>
+                                </div>
+                                {!item.despachado && (
+                                  <div className="d-flex align-items-center gap-1" style={{ flexShrink: 0 }}>
+                                    <button
+                                      onClick={() => handleAjustarCantidadHistorial(item.id, -1)}
+                                      title="Restar uno"
+                                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-secondary)', padding: 2 }}
+                                    >
+                                      <span style={{ fontSize: '0.9rem', fontWeight: 700 }}>−</span>
+                                    </button>
+                                    <button
+                                      onClick={() => setModalCancelar(item)}
+                                      title="Cancelar item"
+                                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-warning)' }}
+                                    >
+                                      <Ban size={14} />
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            )
+                          })}
+                        </div>
+                        <div className="d-flex gap-2 flex-wrap mt-2">
+                          {!completa && (
+                            <button
+                              onClick={() => handleAgregarAComandaExistente(c.id)}
+                              style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'transparent', border: '1px dashed var(--color-primary)', borderRadius: 6, padding: '3px 8px', fontSize: '0.72rem', color: 'var(--color-primary)', cursor: 'pointer' }}
+                            >
+                              <Plus size={12} /> Agregar
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleReimprimirHistorial(c.id, 'cocina')}
+                            disabled={procesandoReimprimir === `${c.id}-cocina`}
+                            style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'transparent', border: '1px solid var(--color-border)', borderRadius: 6, padding: '3px 8px', fontSize: '0.72rem', color: 'var(--color-text-secondary)', cursor: 'pointer' }}
+                          >
+                            <Printer size={12} /> Cocina
+                          </button>
+                          <button
+                            onClick={() => handleReimprimirHistorial(c.id, 'salon')}
+                            disabled={procesandoReimprimir === `${c.id}-salon`}
+                            style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'transparent', border: '1px solid var(--color-border)', borderRadius: 6, padding: '3px 8px', fontSize: '0.72rem', color: 'var(--color-text-secondary)', cursor: 'pointer' }}
+                          >
+                            <Printer size={12} /> Salón
+                          </button>
                         </div>
                       </div>
                     )
@@ -456,7 +605,7 @@ export default function ComandaMesaPage() {
         </div>
       </div>
 
-      <Modal show={modalSelector} onHide={() => setModalSelector(false)} centered size="lg" animation={false} contentClassName="border-0 bg-transparent">
+      <Modal show={modalSelector} onHide={() => { setModalSelector(false); setComandaAgregando(null) }} centered size="lg" animation={false} contentClassName="border-0 bg-transparent">
         <div style={{ borderRadius: 16, overflow: 'hidden', background: 'var(--color-surface)', padding: '1.5rem', height: '75vh' }}>
           <SelectorProductosComanda onSeleccionar={handleSeleccionarOpcion} focusTrigger={focusTrigger} />
         </div>
@@ -466,8 +615,24 @@ export default function ComandaMesaPage() {
         show={!!productoActivo}
         producto={productoActivo}
         varianteInicial={varianteActiva}
-        onHide={() => { setProductoActivo(null); setVarianteActiva(null) }}
+        onHide={() => { setProductoActivo(null); setVarianteActiva(null); setComandaAgregando(null) }}
         onConfirmar={handleConfirmarItem}
+      />
+
+      <ModalFichaComanda
+        show={modalFicha}
+        onHide={() => { setModalFicha(false); setItemPendienteAgregar(null); setComandaAgregando(null) }}
+        onConfirmar={(ficha) => confirmarAgregarAComandaExistente(itemPendienteAgregar, ficha)}
+      />
+
+      <ModalConfirmarAccion
+        show={!!modalCancelar}
+        onHide={() => setModalCancelar(null)}
+        titulo="Cancelar item"
+        mensaje={modalCancelar ? `¿Cancelar "${modalCancelar.cantidad}× ${modalCancelar.descripcion}"? Cocina dejará de prepararlo.` : ''}
+        textoConfirmar="Cancelar item"
+        colorAccion="var(--color-warning)"
+        onConfirmar={() => handleCancelarItemHistorial(modalCancelar.id)}
       />
     </div>
   )
