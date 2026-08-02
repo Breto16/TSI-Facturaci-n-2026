@@ -4,10 +4,8 @@ import { sileo } from 'sileo'
 import { socket } from '../../services/socket'
 import { getComandasActivas, marcarItemDespachado, marcarTodoTipoDespachado } from '../../services/comandasService'
 import { formatoTranscurrido, colorTranscurrido } from '../../utils/tiempo'
+import { ACOMPANAMIENTO_LABEL } from '../../constants/acompanamientos'
 
-const ACOMPANAMIENTO_LABEL = {
-  yuca: 'Yuca', papa: 'Papa', patacon: 'Patacón', especial: 'Especial', solo: 'Solo(a)',
-}
 
 const GRACIA_MS = 5000
 
@@ -79,6 +77,26 @@ export default function ValidacionPage() {
         c.id === Number(comandaId) ? { ...c, items: [] } : c
       ))
     }
+    const handleItemsAgregados = ({ comandaId, items }) => {
+      setComandas(prev => prev.map(c => {
+        if (c.id !== Number(comandaId)) return c
+        let itemsActualizados = [...c.items]
+        for (const nuevo of items) {
+          const idx = itemsActualizados.findIndex(i => i.id === nuevo.id)
+          if (idx >= 0) {
+            itemsActualizados[idx] = nuevo
+          } else {
+            itemsActualizados.push(nuevo)
+          }
+        }
+        return { ...c, items: itemsActualizados }
+      }))
+      if (items.some(i => i.categoria === 'cocina')) {
+        reproducirBeep()
+      }
+    }
+
+    socket.on('comanda-items:agregados', handleItemsAgregados)
 
     socket.on('comanda-item:eliminado', handleItemEliminado)
     socket.on('comanda:vaciada', handleComandaVaciada)
@@ -91,6 +109,7 @@ export default function ValidacionPage() {
       socket.off('comanda-item:actualizado', handleItemActualizado)
       socket.off('comanda-item:eliminado', handleItemEliminado)
       socket.off('comanda:vaciada', handleComandaVaciada)
+      socket.off('comanda-items:agregados', handleItemsAgregados)
       socket.disconnect()
     }
   }, [])

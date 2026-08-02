@@ -8,8 +8,41 @@ const {
   emitirFacturaActualizada,
   emitirItemEliminado,
   emitirComandaVaciada,
+  emitirItemsAgregados,
 } = require('../sockets/io')
 const { imprimirComandaCocina, imprimirComandaCaja } = require('../models/impresion')
+
+const aplicarEfectosFactura = async (facturaId, items) => {
+  const productoIds = [...new Set(items.map(i => i.productoId).filter(Boolean))]
+  if (productoIds.length === 0) return
+
+  const productos = await Producto.obtenerVariosPorId(productoIds)
+  const productoPorId = Object.fromEntries(productos.map(p => [p.id, p]))
+
+  let truchasSum = 0
+  for (const item of items) {
+    const producto = productoPorId[item.productoId]
+    if (!producto) continue
+
+    if (producto.requiere_ficha) {
+      truchasSum += item.cantidad
+    } else {
+      await FacturaItem.agregarOIncrementar({
+        factura_id: facturaId,
+        producto_id: producto.id,
+        descripcion: producto.descripcion,
+        precio_unitario: producto.precio,
+        cantidad: item.cantidad,
+      })
+    }
+  }
+
+  if (truchasSum > 0) {
+    await Factura.incrementarTruchasPendientes(facturaId, truchasSum)
+  }
+  await Factura.recalcularTotales(facturaId)
+  emitirFacturaActualizada(facturaId)
+}
 
 const postComanda = async (req, res) => {
   const { mesaId, saloneroId, facturaId, items, ficha, imprimirSalon } = req.body
@@ -21,35 +54,7 @@ const postComanda = async (req, res) => {
   try {
     const comanda = await Comanda.crear({ mesaId, saloneroId, facturaId, items, ficha, imprimirSalon })
 
-    const productoIds = [...new Set(items.map(i => i.productoId).filter(Boolean))]
-    if (productoIds.length > 0) {
-      const productos = await Producto.obtenerVariosPorId(productoIds)
-      const productoPorId = Object.fromEntries(productos.map(p => [p.id, p]))
-
-      let truchasSum = 0
-      for (const item of items) {
-        const producto = productoPorId[item.productoId]
-        if (!producto) continue
-
-        if (producto.requiere_ficha) {
-          truchasSum += item.cantidad
-        } else {
-          await FacturaItem.agregarOIncrementar({
-            factura_id: facturaId,
-            producto_id: producto.id,
-            descripcion: producto.descripcion,
-            precio_unitario: producto.precio,
-            cantidad: item.cantidad,
-          })
-        }
-      }
-
-      if (truchasSum > 0) {
-        await Factura.incrementarTruchasPendientes(facturaId, truchasSum)
-      }
-      await Factura.recalcularTotales(facturaId)
-      emitirFacturaActualizada(facturaId)
-    }
+    await aplicarEfectosFactura(facturaId, items)
 
     const comandaCompleta = await Comanda.obtenerPorId(comanda.id)
     emitirComandaNueva(comandaCompleta)
@@ -63,6 +68,95 @@ const postComanda = async (req, res) => {
         console.log('No se pudo imprimir ticket de salón:', err.message)
       )
     }
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ msg: 'Error en el servidor' })
+  }
+}
+
+const postAgregarItems = async (req, res) => {
+  const { id } = req.params
+  const { items, ficha } = req.body
+
+  if (!items || items.length === 0) {
+    return res.status(400).json({ msg: 'Se requiere al menos un item' })
+  }
+
+  try {
+    const comandaExistente = await Comanda.obtenerPorId(id)
+    if (!comandaExistente) return res.status(404).json({ msg: 'Comanda no existe' })
+
+    const productoIds = [...new Set(items.map(i => i.productoId).filter(Boolean))]
+    const productos = productoIds.length > 0 ? await Producto.obtenerVariosPorId(productoIds) : []
+    const productoPorId = Object.fromEntries(productos.map(p => [p.id, p]))
+
+    const traeTrucha = items.some(i => productoPorId[i.productoId]?.requiere_ficha)
+    const necesitaFicha = traeTrucha && !comandaExistente.ficha
+
+    if (necesitaFicha && !ficha) {
+      return res.status(400).json({ msg: 'Esta comanda todavía no tiene ficha — indicá una antes de agregar trucha' })
+    }
+
+    const itemsInsertados = await Comanda.agregarItems(id, items)
+
+    if (necesitaFicha && ficha) {
+      await Comanda.actualizarFicha(id, ficha)
+    }
+
+    if (comandaExistente.factura_id) {
+      await aplicarEfectosFactura(comandaExistente.factura_id, items)
+    }
+
+    emitirItemsAgregados(id, itemsInsertados)
+    res.json(itemsInsertados)
+
+    
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ msg: 'Error en el servidor' })
+  }
+}
+
+const putItemCancelado = async (req, res) => {
+  const { itemId } = req.params
+  try {
+    const item = await Comanda.cancelarItem(itemId)
+    if (!item) return res.status(404).json({ msg: 'Item no existe' })
+
+    emitirItemEliminado(itemId)
+
+    const comanda = await Comanda.obtenerPorId(item.comanda_id)
+    if (comanda?.factura_id) emitirFacturaActualizada(comanda.factura_id)
+
+    res.json(item)
+
+    
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({ msg: 'Error en el servidor' })
+  }
+}
+
+const putItemCantidad = async (req, res) => {
+  const { itemId } = req.params
+  const { delta } = req.body
+
+  try {
+    const item = await Comanda.ajustarCantidadItem(itemId, Number(delta))
+    if (!item) return res.status(404).json({ msg: 'Item no existe' })
+
+    if (item.cancelado) {
+      emitirItemEliminado(itemId)
+    } else {
+      emitirItemActualizado(item)
+    }
+
+    const comanda = await Comanda.obtenerPorId(item.comanda_id)
+    if (comanda?.factura_id) emitirFacturaActualizada(comanda.factura_id)
+
+    res.json(item)
+
+    
   } catch (error) {
     console.log(error)
     res.status(500).json({ msg: 'Error en el servidor' })
@@ -126,8 +220,14 @@ const putTodoTipoDespachado = async (req, res) => {
 const deleteItemComanda = async (req, res) => {
   const { itemId } = req.params
   try {
-    await Comanda.eliminarItem(itemId)
+    const comandaId = await Comanda.eliminarItem(itemId)
     emitirItemEliminado(itemId)
+
+    if (comandaId) {
+      const comanda = await Comanda.obtenerPorId(comandaId)
+      if (comanda?.factura_id) emitirFacturaActualizada(comanda.factura_id)
+    }
+
     res.json({ msg: 'Item eliminado de la comanda' })
   } catch (error) {
     console.log(error)
@@ -140,6 +240,10 @@ const deleteTodosItemsComanda = async (req, res) => {
   try {
     await Comanda.eliminarTodosItems(id)
     emitirComandaVaciada(id)
+
+    const comanda = await Comanda.obtenerPorId(id)
+    if (comanda?.factura_id) emitirFacturaActualizada(comanda.factura_id)
+
     res.json({ msg: 'Comanda vaciada' })
   } catch (error) {
     console.log(error)
@@ -168,6 +272,9 @@ const postReimprimir = async (req, res) => {
 
 module.exports = {
   postComanda,
+  postAgregarItems,
+  putItemCancelado,
+  putItemCantidad,
   getComandasPorFactura,
   getComandasActivas,
   putItemDespachado,

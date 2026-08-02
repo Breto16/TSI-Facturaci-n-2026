@@ -5,6 +5,21 @@ export const crearComanda = async (facturaId, mesaId, saloneroId, items, ficha, 
   return data
 }
 
+export const agregarItemsComanda = async (comandaId, items, ficha) => {
+  const { data } = await apiClient.post(`/comandas/${comandaId}/items`, { items, ficha })
+  return data
+}
+
+export const cancelarItemComanda = async (itemId) => {
+  const { data } = await apiClient.put(`/comandas/items/${itemId}/cancelar`)
+  return data
+}
+
+export const ajustarCantidadItemComanda = async (itemId, delta) => {
+  const { data } = await apiClient.put(`/comandas/items/${itemId}/cantidad`, { delta })
+  return data
+}
+
 export const getComandasPorFactura = async (facturaId) => {
   const { data } = await apiClient.get(`/comandas/factura/${facturaId}`)
   return data

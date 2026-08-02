@@ -1,14 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Modal } from 'react-bootstrap'
 import { Minus, Plus } from 'lucide-react'
-
-const ACOMPANAMIENTOS = [
-  { value: 'yuca', label: 'Yuca' },
-  { value: 'papa', label: 'Papa' },
-  { value: 'patacon', label: 'Patacón' },
-  { value: 'especial', label: 'Especial' },
-  { value: 'solo', label: 'Solo(a)' },
-]
+import { ACOMPANAMIENTOS } from '../../../constants/acompanamientos'
 
 export default function ModalDetalleItem({ show, producto, varianteInicial, onHide, onConfirmar }) {
   const [cantidad, setCantidad] = useState(1)
@@ -57,7 +50,7 @@ export default function ModalDetalleItem({ show, producto, varianteInicial, onHi
           )}
         </div>
 
-        <div style={{ background: 'var(--color-surface)', padding: '2rem', minHeight: '40vh' }}>
+        <div style={{ background: 'var(--color-surface)', padding: '2rem' }}>
 
           <label className="fw-medium mb-2 d-block" style={{ color: 'var(--color-text)' }}>
             Cantidad

@@ -43,6 +43,98 @@ const crear = async ({ mesaId, saloneroId, facturaId, items, ficha, imprimirSalo
   }
 }
 
+// Si ya existe un item activo (no cancelado, no despachado) con exactamente
+// el mismo producto/variante/acompañamiento/detalle/sale_antes, suma la
+// cantidad ahí en vez de crear una fila nueva — resuelve que pedir "otro
+// pollo igual" duplique renglones en validación.
+const agregarItems = async (comandaId, items) => {
+  const itemsResultado = []
+
+  for (const item of items) {
+    const { rows: existentes } = await pool.query(
+      `SELECT * FROM comanda_items
+       WHERE comanda_id = $1 AND producto_id = $2
+         AND COALESCE(variante,'') = COALESCE($3,'')
+         AND COALESCE(acompanamiento::text,'') = COALESCE($4,'')
+         AND COALESCE(detalle,'') = COALESCE($5,'')
+         AND sale_antes = $6
+         AND cancelado = false AND despachado = false`,
+      [comandaId, item.productoId, item.variante || null, item.acompanamiento || null, item.detalle || null, !!item.saleAntes]
+    )
+
+    if (existentes.length > 0) {
+      const { rows } = await pool.query(
+        `UPDATE comanda_items SET cantidad = cantidad + $1 WHERE id = $2 RETURNING *`,
+        [item.cantidad, existentes[0].id]
+      )
+      itemsResultado.push(rows[0])
+    } else {
+      const { rows } = await pool.query(
+        `INSERT INTO comanda_items
+          (comanda_id, producto_id, descripcion, cantidad, categoria, variante, acompanamiento, detalle, sale_antes)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+         RETURNING *`,
+        [
+          comandaId,
+          item.productoId,
+          item.descripcion,
+          item.cantidad,
+          item.categoria,
+          item.variante || null,
+          item.acompanamiento || null,
+          item.detalle || null,
+          !!item.saleAntes,
+        ]
+      )
+      itemsResultado.push(rows[0])
+    }
+  }
+
+  return itemsResultado
+}
+
+// Solo actualiza la ficha si la comanda todavía no tenía una — nunca
+// pisa una ficha ya asignada.
+const actualizarFicha = async (comandaId, ficha) => {
+  const { rows } = await pool.query(
+    `UPDATE comandas SET ficha = $1 WHERE id = $2 AND ficha IS NULL RETURNING *`,
+    [ficha, comandaId]
+  )
+  return rows[0]
+}
+
+const cancelarItem = async (itemId) => {
+  const { rows } = await pool.query(
+    `UPDATE comanda_items SET cancelado = true, cancelado_en = now() WHERE id = $1 RETURNING *`,
+    [itemId]
+  )
+  return rows[0]
+}
+
+// Ajusta la cantidad de un item ya enviado (mientras no esté despachado).
+// Si el resultado llega a 0 o menos, se trata como una cancelación (soft),
+// nunca como un borrado duro.
+const ajustarCantidadItem = async (itemId, delta) => {
+  const { rows: actual } = await pool.query('SELECT * FROM comanda_items WHERE id = $1', [itemId])
+  if (!actual[0]) return null
+
+  const nuevaCantidad = actual[0].cantidad + delta
+
+  if (nuevaCantidad <= 0) {
+    const { rows } = await pool.query(
+      `UPDATE comanda_items SET cancelado = true, cancelado_en = now() WHERE id = $1 RETURNING *`,
+      [itemId]
+    )
+    return rows[0]
+  }
+
+  const { rows } = await pool.query(
+    `UPDATE comanda_items SET cantidad = $1 WHERE id = $2 RETURNING *`,
+    [nuevaCantidad, itemId]
+  )
+  return rows[0]
+}
+
 const obtenerPorId = async (id) => {
   const { rows } = await pool.query(`
     SELECT c.*, m.nombre AS mesa_nombre, s.nombre AS salonero_nombre, f.detalle AS factura_detalle
@@ -95,7 +187,7 @@ const listarActivas = async () => {
     LEFT JOIN mesas m ON m.id = c.mesa_id
     LEFT JOIN saloneros s ON s.id = c.salonero_id
     LEFT JOIN facturas f ON f.id = c.factura_id
-    WHERE ci.despachado = false
+    WHERE ci.despachado = false AND ci.cancelado = false
     ORDER BY c.creado_en ASC
   `)
 
@@ -103,7 +195,7 @@ const listarActivas = async () => {
 
   const ids = comandas.map(c => c.id)
   const { rows: items } = await pool.query(
-    'SELECT * FROM comanda_items WHERE comanda_id = ANY($1::int[]) ORDER BY id ASC',
+    'SELECT * FROM comanda_items WHERE comanda_id = ANY($1::int[]) AND cancelado = false ORDER BY id ASC',
     [ids]
   )
 
@@ -137,16 +229,32 @@ const marcarTodoTipoDespachado = async (comandaId, categoria) => {
   return rows
 }
 
+// Borrado duro (sin rastro) — marca items_eliminados en la comanda padre
+// para que el cajero siga viendo el recordatorio de validar la factura.
 const eliminarItem = async (itemId) => {
+  const { rows } = await pool.query('SELECT comanda_id FROM comanda_items WHERE id = $1', [itemId])
+  const comandaId = rows[0]?.comanda_id
+
   await pool.query('DELETE FROM comanda_items WHERE id = $1', [itemId])
+
+  if (comandaId) {
+    await pool.query('UPDATE comandas SET items_eliminados = true WHERE id = $1', [comandaId])
+  }
+
+  return comandaId
 }
 
 const eliminarTodosItems = async (comandaId) => {
   await pool.query('DELETE FROM comanda_items WHERE comanda_id = $1', [comandaId])
+  await pool.query('UPDATE comandas SET items_eliminados = true WHERE id = $1', [comandaId])
 }
 
 module.exports = {
   crear,
+  agregarItems,
+  actualizarFicha,
+  cancelarItem,
+  ajustarCantidadItem,
   obtenerPorId,
   listarPorFactura,
   listarActivas,

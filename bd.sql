@@ -18,7 +18,7 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
-    CREATE TYPE acompanamiento_tipo AS ENUM ('yuca', 'papa', 'patacon', 'especial', 'solo');
+    CREATE TYPE acompanamiento_tipo AS ENUM ('yuca', 'papa', 'patacon', 'especial', 'maduro', 'solo');
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- ============================================
@@ -281,3 +281,11 @@ WHERE descripcion ILIKE 'trucha%'
 
 ALTER TABLE comanda_items ADD COLUMN sale_antes BOOLEAN NOT NULL DEFAULT false;
 ALTER TABLE comandas ADD COLUMN imprimir_salon BOOLEAN NOT NULL DEFAULT false;
+
+
+ALTER TYPE acompanamiento_tipo ADD VALUE IF NOT EXISTS 'maduro';
+
+
+ALTER TABLE comanda_items ADD COLUMN cancelado BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE comanda_items ADD COLUMN cancelado_en TIMESTAMP;
+ALTER TABLE comandas ADD COLUMN items_eliminados BOOLEAN NOT NULL DEFAULT false;

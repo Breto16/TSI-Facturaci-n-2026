@@ -3,6 +3,7 @@ const fs = require('fs')
 const path = require('path')
 const pool = require('../db/connection')
 const { exec } = require('child_process')
+const { ACOMPANAMIENTO_LABEL } = require('../constants/acompanamientos')
 
 require('dotenv').config()
 
@@ -570,15 +571,11 @@ const obtenerDatosComanda = async (comandaId) => {
   const { rows: items } = await pool.query(`
     SELECT descripcion, cantidad, categoria, variante, acompanamiento, detalle, sale_antes
     FROM comanda_items
-    WHERE comanda_id = $1
+    WHERE comanda_id = $1 AND cancelado = false
     ORDER BY id ASC
   `, [comandaId])
 
   return { ...rows[0], items }
-}
-
-const ACOMPANAMIENTO_LABEL = {
-  yuca: 'Yuca', papa: 'Papa', patacon: 'Patacón', especial: 'Especial', solo: 'Solo(a)',
 }
 
 // Tamaños de fuente usados en el cuerpo de la comanda — un solo lugar para

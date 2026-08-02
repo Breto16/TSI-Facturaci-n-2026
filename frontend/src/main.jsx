@@ -9,6 +9,14 @@ import { AuthProvider } from './context/AuthContext';
 import './styles/variables.css';
 import './styles/global.css';
 
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch((err) => {
+      console.error('Fallo registro de service worker:', err);
+    });
+  });
+}
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
