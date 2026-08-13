@@ -136,3 +136,4 @@ dist
 .pnp.*
 Dev Launcher.bat
 /backend/assets/facturas
+/backend/certs
