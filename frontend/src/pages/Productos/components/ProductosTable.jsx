@@ -2,13 +2,13 @@ import { Table } from 'react-bootstrap'
 import { Pencil, Eye, EyeOff } from 'lucide-react'
 
 const CATEGORIA_CONFIG = {
-  salon:  { label: 'Salón',  color: '#0891b2', bg: '#e0f2fe' },
-  cocina: { label: 'Cocina', color: '#92400e', bg: '#fef3c7' },
+  salon:  { label: 'Salón',  color: 'var(--color-info)', bg: 'rgba(14, 165, 233, 0.15)' },
+  cocina: { label: 'Cocina', color: 'var(--color-warning)', bg: 'rgba(245, 158, 11, 0.16)' },
 }
 
 const DISPONIBLE_CONFIG = {
-  true:  { label: 'Disponible', color: '#1c530d', bg: '#dcfce7' },
-  false: { label: 'Inactivo',   color: '#4a5568', bg: '#f3f4f6' },
+  true:  { label: 'Disponible', color: 'var(--color-success)', bg: 'rgba(34, 197, 94, 0.15)' },
+  false: { label: 'Inactivo',   color: 'var(--color-text-secondary)', bg: 'rgba(148, 163, 184, 0.15)' },
 }
 
 const BadgeSpan = ({ color, bg, label }) => (
@@ -88,7 +88,7 @@ export default function ProductosTable({ productos, onEditar, onToggleDisponible
                         borderRadius: 7,
                         padding: '4px 8px',
                         cursor: 'pointer',
-                        color: p.disponible ? 'var(--color-text-secondary)' : '#1c530d',
+                        color: p.disponible ? 'var(--color-text-secondary)' : 'var(--color-success)',
                         display: 'flex',
                         alignItems: 'center',
                       }}

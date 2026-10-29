@@ -139,7 +139,7 @@ export default function PanelComandasFactura({ comandas, cargando, revisados, on
   return (
     <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
       {hayAviso && (
-        <div style={{ padding: '8px 12px', borderRadius: 8, background: 'var(--color-danger)', color: 'white', fontSize: '0.78rem', fontWeight: 600 }}>
+        <div style={{ padding: '8px 12px', borderRadius: 8, background: 'rgba(207, 102, 121, 0.15)', border: '1px solid rgba(207, 102, 121, 0.3)', color: 'var(--color-danger)', fontSize: '0.78rem', fontWeight: 600 }}>
           Importante: hay items cancelados o eliminados en las comandas. Verificá que la factura no los siga cobrando.
         </div>
       )}

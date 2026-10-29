@@ -18,13 +18,13 @@ export default function ModalNuevaCuenta({ show, mesa, onHide, onCrear, creando 
         <div style={{ background: 'var(--color-primary)', padding: '1.25rem 1.5rem' }}>
           <div className="d-flex align-items-center gap-2">
             <UserPlus size={20} color="var(--color-text-bg)" />
-            <span className="fw-bold fs-5" style={{ color: 'var(--color-text-bg)' }}>
+            <span className="fw-bold fs-5" style={{ color: "var(--color-text-bg)" }}>
               Nueva cuenta — Mesa {mesa?.nombre || mesa?.id}
             </span>
           </div>
         </div>
         <div style={{ background: 'var(--color-surface)', padding: '1.5rem' }}>
-          <label className="small fw-medium mb-1 d-block" style={{ color: 'var(--color-text)' }}>
+          <label className="small fw-medium mb-1 d-block" style={{ color: 'var(--color-text-secondary)' }}>
             Nombre para esta cuenta
           </label>
           <input
@@ -37,7 +37,7 @@ export default function ModalNuevaCuenta({ show, mesa, onHide, onCrear, creando 
             style={{ width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '1rem', marginBottom: 16 }}
           />
           <div className="d-flex justify-content-end gap-2">
-            <button onClick={onHide} style={{ background: 'transparent', border: '1px solid var(--color-btn-secondary-border)', borderRadius: 8, padding: '8px 16px', cursor: 'pointer', color: 'var(--color-btn-secondary-text)' }}>
+            <button onClick={onHide} style={{ background: 'transparent', border: '1px solid var(--color-border)', borderRadius: 8, padding: '8px 16px', cursor: 'pointer', color: 'var(--color-text)' }}>
               Cancelar
             </button>
             <button

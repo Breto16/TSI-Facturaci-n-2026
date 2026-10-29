@@ -24,10 +24,11 @@ const Navbar = () => {
   };
 
   const linkStyle = {
-    color: 'var(--color-text)',
+    color: 'var(--color-text-secondary)',
     display: 'flex',
     alignItems: 'center',
     gap: '6px',
+    transition: 'color 0.15s ease',
   };
 
   const linksVisibles = NAV_LINKS.filter(
@@ -43,6 +44,10 @@ const Navbar = () => {
       }}
     >
       <style>{`
+        .navbar .nav-link:hover,
+        .navbar .nav-link.active {
+          color: var(--color-text) !important;
+        }
         @keyframes navbar-menu-in {
           from { opacity: 0; transform: translateY(-8px); }
           to { opacity: 1; transform: translateY(0); }

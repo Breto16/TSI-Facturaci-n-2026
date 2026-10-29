@@ -7,7 +7,7 @@ export default function ConfirmacionModal({ show, onHide, onConfirmar, mesa, cre
     <Modal show={show} onHide={onHide} centered animation={false} contentClassName="border-0 bg-transparent">
       <div style={{ borderRadius: 16, overflow: 'hidden' }}>
 
-        <div style={{ background: 'var(--color-info)', color: 'var(--color-text-bg)', padding: '1.25rem 1.5rem' }}>
+        <div style={{ background: 'var(--color-primary)', color: 'var(--color-text-bg)', padding: '1.25rem 1.5rem' }}>
           <div className="d-flex align-items-center justify-content-between">
             <div className="d-flex align-items-center gap-2">
               <PlusCircle size={20} color="var(--color-text-bg)" />
@@ -45,12 +45,12 @@ export default function ConfirmacionModal({ show, onHide, onConfirmar, mesa, cre
               onClick={onHide}
               style={{
                 background: 'transparent',
-                border: '1px solid var(--color-btn-secondary-border)',
+                border: '1px solid var(--color-border)',
                 borderRadius: 8,
                 padding: '7px 16px',
                 fontSize: '0.875rem',
                 cursor: 'pointer',
-                color: 'var(--color-btn-secondary-text)',
+                color: 'var(--color-text)',
               }}
             >
               Cancelar
@@ -59,7 +59,7 @@ export default function ConfirmacionModal({ show, onHide, onConfirmar, mesa, cre
               onClick={onConfirmar}
               disabled={creando}
               style={{
-                background: 'var(--color-info)',
+                background: 'var(--color-primary)',
                 border: 'none',
                 borderRadius: 8,
                 padding: '7px 16px',

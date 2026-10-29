@@ -88,20 +88,20 @@ const BannerPrincipal = ({ banner, onClick }) => {
         flexShrink: 0,
         transition: 'background-color 0.15s ease',
       }}>
-        <Icono size={24} color={hover ? '#ffffff' : 'var(--color-primary)'} />
+        <Icono size={24} color={hover ? 'var(--color-text-bg)' : 'var(--color-primary)'} />
       </div>
       <div>
         <div style={{
           fontWeight: 700,
           fontSize: '1rem',
-          color: hover ? '#ffffff' : 'var(--color-primary)',
+          color: hover ? 'var(--color-text-bg)' : 'var(--color-primary)',
           transition: 'color 0.15s ease',
         }}>
           {banner.label}
         </div>
         <div style={{
           fontSize: '0.8rem',
-          color: hover ? 'rgba(255,255,255,0.75)' : 'var(--color-text-secondary)',
+          color: hover ? 'var(--color-text-bg)' : 'var(--color-text-secondary)', opacity: hover ? 0.8 : 1,
           transition: 'color 0.15s ease',
           marginTop: 2,
         }}>
@@ -134,19 +134,19 @@ const BannerTrucha = ({ onClick }) => {
       }}
     >
       <div className="d-flex align-items-center gap-3">
-        <Fish size={28} color={hover ? '#ffffff' : 'var(--color-primary)'} style={{ transition: 'color 0.15s ease' }} />
+        <Fish size={28} color={hover ? 'var(--color-text-bg)' : 'var(--color-primary)'} style={{ transition: 'color 0.15s ease' }} />
         <div>
           <div style={{
             fontWeight: 700,
             fontSize: '0.95rem',
-            color: hover ? '#ffffff' : 'var(--color-primary)',
+            color: hover ? 'var(--color-text-bg)' : 'var(--color-primary)',
             transition: 'color 0.15s ease',
           }}>
             Trucha cruda
           </div>
           <div style={{
             fontSize: '0.78rem',
-            color: hover ? 'rgba(255,255,255,0.75)' : 'var(--color-text-secondary)',
+            color: hover ? 'var(--color-text-bg)' : 'var(--color-text-secondary)', opacity: hover ? 0.8 : 1,
             transition: 'color 0.15s ease',
           }}>
             Ajustar precio por gramo vigente
@@ -156,7 +156,7 @@ const BannerTrucha = ({ onClick }) => {
       <span style={{
         fontSize: '0.72rem',
         fontWeight: 600,
-        color: hover ? 'rgba(255,255,255,0.75)' : 'var(--color-text-secondary)',
+        color: hover ? 'var(--color-text-bg)' : 'var(--color-text-secondary)', opacity: hover ? 0.8 : 1,
         textTransform: 'uppercase',
         letterSpacing: 1,
         transition: 'color 0.15s ease',
@@ -230,8 +230,8 @@ export default function InicioPage() {
           <div style={{ background: 'var(--color-primary)', padding: '1.25rem 1.5rem' }}>
             <div className="d-flex align-items-center justify-content-between">
               <div className="d-flex align-items-center gap-2">
-                <Fish size={20} color="white" />
-                <span className="fw-bold text-white fs-5">Precio trucha cruda</span>
+                <Fish size={20} color="var(--color-text-bg)" />
+                <span className="fw-bold fs-5" style={{ color: "var(--color-text-bg)" }}>Precio trucha cruda</span>
               </div>
               <button
                 onClick={() => setModalTrucha(false)}
@@ -242,7 +242,7 @@ export default function InicioPage() {
                   width: 32,
                   height: 32,
                   cursor: 'pointer',
-                  color: 'white',
+                  color: 'var(--color-text-bg)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -252,7 +252,7 @@ export default function InicioPage() {
                 ✕
               </button>
             </div>
-            <div className="text-white opacity-70 small mt-1">
+            <div className="opacity-70 small mt-1" style={{ color: "var(--color-text-bg)" }}>
               Ingresá el nuevo precio por gramo. Ejemplo: 5.5 = ₡5,500 por kilo.
             </div>
           </div>
@@ -261,7 +261,7 @@ export default function InicioPage() {
             {errorTrucha && (
               <div
                 className="mb-3 p-2 rounded small"
-                style={{ background: '#fef2f2', color: '#c70009', border: '1px solid #fecaca' }}
+                style={{ background: 'rgba(207, 102, 121, 0.15)', color: 'var(--color-danger)', border: '1px solid rgba(207, 102, 121, 0.3)' }}
               >
                 {errorTrucha}
               </div>
@@ -312,7 +312,7 @@ export default function InicioPage() {
                   border: 'none',
                   borderRadius: 8,
                   padding: '7px 16px',
-                  color: 'white',
+                  color: 'var(--color-text-bg)',
                   fontSize: '0.875rem',
                   fontWeight: 500,
                   cursor: 'pointer',

@@ -370,7 +370,7 @@ const confirmarEliminar = async () => {
       <Modal show={modalEliminar.show} onHide={() => setModalEliminar({ show: false, id: null, titulo: '' })} centered animation={false} contentClassName="border-0 bg-transparent">
         <div style={{ borderRadius: 16, overflow: 'hidden' }}>
           <div style={{ background: GRADIENTS.rojo, padding: '1.25rem 1.5rem' }}>
-            <span className="fw-bold text-white fs-5">Eliminar consulta</span>
+            <span className="fw-bold fs-5" style={{ color: "var(--color-text-bg)" }}>Eliminar consulta</span>
           </div>
           <div style={{ background: 'var(--color-surface)', padding: '1.5rem' }}>
             <p style={{ color: 'var(--color-text)', marginBottom: '1.5rem' }}>

@@ -27,13 +27,13 @@ export default function ModalPasswordCierre({ show, onValidado, onCancelar }) {
       <div style={{ borderRadius: 16, overflow: 'hidden' }}>
         <div style={{ background: 'var(--color-danger)', padding: '1.25rem 1.5rem' }}>
           <div className="d-flex align-items-center gap-2">
-            <Lock size={20} color="white" />
-            <span className="fw-bold text-white fs-5">Acceso a Cierre</span>
+            <Lock size={20} color="var(--color-text-bg)" />
+            <span className="fw-bold fs-5" style={{ color: "var(--color-text-bg)" }}>Acceso a Cierre</span>
           </div>
         </div>
         <div style={{ background: 'var(--color-surface)', padding: '1.5rem' }}>
           {error && (
-            <div className="mb-3 p-2 rounded small" style={{ background: '#fef2f2', color: '#c70009', border: '1px solid #fecaca' }}>
+            <div className="mb-3 p-2 rounded small" style={{ background: 'rgba(239, 68, 68, 0.12)', color: 'var(--color-danger)', border: '1px solid rgba(239, 68, 68, 0.25)' }}>
               {error}
             </div>
           )}
@@ -56,7 +56,7 @@ export default function ModalPasswordCierre({ show, onValidado, onCancelar }) {
             <button
               onClick={handleValidar}
               disabled={validando || !password}
-              style={{ flex: 1, background: 'var(--color-danger)', border: 'none', borderRadius: 8, padding: '10px', color: 'white', fontWeight: 600, cursor: 'pointer', opacity: (validando || !password) ? 0.6 : 1 }}
+              style={{ flex: 1, background: 'var(--color-danger)', border: 'none', borderRadius: 8, padding: '10px', color: 'var(--color-text-bg)', fontWeight: 600, cursor: 'pointer', opacity: (validando || !password) ? 0.6 : 1 }}
             >
               {validando ? 'Verificando...' : 'Entrar'}
             </button>

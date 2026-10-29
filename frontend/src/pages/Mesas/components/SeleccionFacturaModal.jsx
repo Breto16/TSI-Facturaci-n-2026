@@ -3,9 +3,11 @@ import { Plus, ChevronRight, Receipt } from 'lucide-react'
 import { GRADIENTS } from '../../../constants/theme'
 
 const ESTADO_CONFIG = {
-  abierta:  { label: 'Abierta',  color: 'var(--color-danger)', bg: '#fef2f2' },
-  impresa:  { label: 'Impresa',  color: 'var(--color-warning)', bg: '#fef3c7' },
-  dividida: { label: 'Dividida', color: 'var(--color-info)', bg: '#e0f2fe' },
+  abierta:  { label: 'Abierta',  color: 'var(--color-danger)', bg: 'rgba(239, 68, 68, 0.15)' },
+  impresa:  { label: 'Impresa',  color: 'var(--color-warning)', bg: 'rgba(245, 158, 11, 0.16)' },
+  dividida: { label: 'Dividida', color: 'var(--color-info)', bg: 'rgba(14, 165, 233, 0.15)' },
+  pagada:   { label: 'Pagada',   color: 'var(--color-success)', bg: 'rgba(34, 197, 94, 0.15)' },
+  anulada:  { label: 'Anulada',  color: 'var(--color-text-secondary)', bg: 'rgba(148, 163, 184, 0.15)' },
 }
 
 export default function SeleccionFacturaModal({ show, onHide, mesa, facturas, onSeleccionar, onNueva, creando }) {
@@ -13,7 +15,7 @@ export default function SeleccionFacturaModal({ show, onHide, mesa, facturas, on
     <Modal show={show} onHide={onHide} centered animation={true} contentClassName="border-0 bg-transparent">
       <div style={{ borderRadius: 16, overflow: 'hidden' }}>
 
-        <div style={{ background: 'var(--color-info)', padding: '1.25rem 1.5rem', color:'var(--color-text-bg)' }}>
+        <div style={{ background: 'var(--color-primary)', padding: '1.25rem 1.5rem', color: 'var(--color-text-bg)' }}>
           <div className="d-flex align-items-center justify-content-between">
             <div className="d-flex align-items-center gap-2">
               <Receipt size={20} />
@@ -34,6 +36,7 @@ export default function SeleccionFacturaModal({ show, onHide, mesa, facturas, on
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontSize: '1rem',
+                color: 'var(--color-text-bg)',
               }}
             >
               ✕

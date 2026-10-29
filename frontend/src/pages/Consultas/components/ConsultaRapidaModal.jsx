@@ -63,19 +63,19 @@ export default function ConsultaRapidaModal({ show, onHide, onCreada }) {
         <div style={{ background: 'var(--color-primary)', padding: '1.25rem 1.5rem' }}>
           <div className="d-flex align-items-center justify-content-between">
             <div className="d-flex align-items-center gap-2">
-              <Sparkles size={20} color="white" />
-              <span className="fw-bold text-white fs-5">Nueva consulta rápida</span>
+              <Sparkles size={20} color="var(--color-text-bg)" />
+              <span className="fw-bold fs-5" style={{ color: "var(--color-text-bg)" }}>Nueva consulta rápida</span>
             </div>
-            <button onClick={onHide} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+            <button onClick={onHide} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', color: 'var(--color-text-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
           </div>
-          <div className="text-white opacity-70 small mt-1">
+          <div className="opacity-70 small mt-1" style={{ color: "var(--color-text-bg)" }}>
             Guardá un grupo de productos para consultarlos rápido después.
           </div>
         </div>
 
         <div style={{ background: 'var(--color-surface)', padding: '1.5rem' }}>
           {error && (
-            <div className="mb-3 p-2 rounded small" style={{ background: '#fef2f2', color: '#c70009', border: '1px solid #fecaca' }}>
+            <div className="mb-3 p-2 rounded small" style={{ background: 'rgba(207, 102, 121, 0.15)', color: 'var(--color-danger)', border: '1px solid rgba(207, 102, 121, 0.3)' }}>
               {error}
             </div>
           )}

@@ -298,7 +298,7 @@ export default function PersonalPage() {
 
           <div style={{ background: 'var(--color-surface)', padding: '1.5rem' }}>
             {error && (
-              <div className="mb-3 p-2 rounded small" style={{ background: '#fef2f2', color: '#c70009', border: '1px solid #fecaca' }}>
+              <div className="mb-3 p-2 rounded small" style={{ background: 'rgba(207, 102, 121, 0.15)', color: 'var(--color-danger)', border: '1px solid rgba(207, 102, 121, 0.3)' }}>
                 {error}
               </div>
             )}

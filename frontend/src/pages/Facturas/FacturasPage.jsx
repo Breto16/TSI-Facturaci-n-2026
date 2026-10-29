@@ -17,11 +17,11 @@ const ESTADOS = [
 ]
 
 const ESTADO_CONFIG = {
-  abierta:  { label: 'Abierta',  color: '#dc2626', bg: '#fef2f2' },
-  impresa:  { label: 'Impresa',  color: '#92400e', bg: '#fef3c7' },
-  dividida: { label: 'Dividida', color: '#0891b2', bg: '#e0f2fe' },
-  pagada:   { label: 'Pagada',   color: '#1c530d', bg: '#dcfce7' },
-  anulada:  { label: 'Anulada',  color: '#4a5568', bg: '#f3f4f6' },
+  abierta:  { label: 'Abierta',  color: 'var(--color-danger)', bg: 'rgba(239, 68, 68, 0.15)' },
+  impresa:  { label: 'Impresa',  color: 'var(--color-warning)', bg: 'rgba(245, 158, 11, 0.16)' },
+  dividida: { label: 'Dividida', color: 'var(--color-info)', bg: 'rgba(14, 165, 233, 0.15)' },
+  pagada:   { label: 'Pagada',   color: 'var(--color-success)', bg: 'rgba(34, 197, 94, 0.15)' },
+  anulada:  { label: 'Anulada',  color: 'var(--color-text-secondary)', bg: 'rgba(148, 163, 184, 0.15)' },
 }
 
 const hoy = () => new Date().toISOString().split('T')[0]

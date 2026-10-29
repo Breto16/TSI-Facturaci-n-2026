@@ -699,8 +699,8 @@ export default function FacturaPage() {
                                 </span>
                             </div>
                             {truchasPendientes > 0 && (
-                                <div style={{ flex: 1, padding: '6px 12px', background: '#fef3c7', border: '1px solid #fde68a', borderRadius: 8 }}>
-                                    <span style={{ fontSize: '0.8rem', color: '#92400e', fontWeight: 600 }}>
+                                <div style={{ flex: 1, padding: '6px 12px', background: 'rgba(201, 152, 66, 0.15)', border: '1px solid rgba(201, 152, 66, 0.3)', borderRadius: 8 }}>
+                                    <span style={{ fontSize: '0.8rem', color: 'var(--color-warning)', fontWeight: 600 }}>
                                         {truchasPendientes} trucha{truchasPendientes !== 1 ? 's' : ''} pendiente{truchasPendientes !== 1 ? 's' : ''}
                                     </span>
                                 </div>
@@ -855,7 +855,7 @@ export default function FacturaPage() {
                                     <button
                                         onClick={() => setModalAnular(true)}
                                         title="Anular"
-                                        style={{ ...BTN_BASE, background: 'var(--color-danger)', color: 'var(--color-text-bg)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                                        style={{ ...BTN_BASE, background: 'rgba(207, 102, 121, 0.15)', border: '1px solid rgba(207, 102, 121, 0.35)', color: 'var(--color-danger)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
                                     >
                                         <Ban size={16} />
                                         <span className="d-none d-md-inline">Anular</span>
@@ -863,7 +863,7 @@ export default function FacturaPage() {
                                     <button
                                         onClick={() => setModalDividir(true)}
                                         title="Dividir"
-                                        style={{ ...BTN_BASE, background: 'var(--color-info)', color: 'var(--color-text-bg)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                                        style={{ ...BTN_BASE, background: 'rgba(96, 143, 199, 0.15)', border: '1px solid rgba(96, 143, 199, 0.35)', color: 'var(--color-info)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
                                     >
                                         <Split size={16} />
                                         <span className="d-none d-md-inline">Dividir</span>
@@ -874,7 +874,7 @@ export default function FacturaPage() {
                                 <button
                                     onClick={handleImprimir}
                                     title="Imprimir"
-                                    style={{ ...BTN_BASE, background: 'var(--color-surface)', border: '2px solid var(--color-btn-secondary-border)', color: 'var(--color-btn-secondary-text)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                                    style={{ ...BTN_BASE, background: 'rgba(255, 255, 255, 0.04)', border: '1px solid var(--color-border)', color: 'var(--color-text)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
                                 >
                                     <Printer size={16} />
                                     <span className="d-none d-md-inline">Imprimir</span>
@@ -883,7 +883,7 @@ export default function FacturaPage() {
                                     <button
                                         onClick={() => { setModalPago(true); setTipoPago('tarjeta'); setMontoRecibido('') }}
                                         title="Pagar"
-                                        style={{ ...BTN_BASE, background: 'var(--color-primary)', color: 'var(--color-text-bg)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                                        style={{ ...BTN_BASE, background: 'var(--color-primary)', border: 'none', color: 'var(--color-text-bg)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
                                     >
                                         <CreditCard size={16} />
                                         <span className="d-none d-md-inline">Pagar</span>

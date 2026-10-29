@@ -29,10 +29,10 @@ export default function CantidadModal({ show, onHide, producto, onConfirmar }) {
       <div style={{ borderRadius: 16, overflow: 'hidden' }}>
         <div style={{ background: 'var(--color-primary)', padding: '1rem 1.25rem' }}>
           <div className="d-flex align-items-center justify-content-between">
-            <span className="fw-bold text-white">{producto?.descripcion}</span>
-            <button onClick={onHide} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 8, width: 28, height: 28, cursor: 'pointer', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+            <span className="fw-bold fs-5" style={{ color: "var(--color-text-bg)" }}>{producto?.descripcion}</span>
+            <button onClick={onHide} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 8, width: 28, height: 28, cursor: 'pointer', color: 'var(--color-text-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
           </div>
-          <div className="text-white opacity-70 small mt-1">
+          <div className="opacity-70 small mt-1" style={{ color: "var(--color-text-bg)" }}>
             ₡{Number(producto?.precio).toLocaleString('es-CR')} por unidad
           </div>
         </div>
@@ -61,7 +61,7 @@ export default function CantidadModal({ show, onHide, producto, onConfirmar }) {
             <button onClick={onHide} style={{ flex: 1, background: 'transparent', border: '1px solid var(--color-btn-secondary-border)', borderRadius: 8, padding: '7px', fontSize: '0.875rem', cursor: 'pointer', color: 'var(--color-btn-secondary-text)' }}>
               Cancelar
             </button>
-            <button onClick={handleConfirmar} style={{ flex: 1, background: 'var(--color-primary)', border: 'none', borderRadius: 8, padding: '7px', color: 'white', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer' }}>
+            <button onClick={handleConfirmar} style={{ flex: 1, background: 'var(--color-primary)', border: 'none', borderRadius: 8, padding: '7px', color: 'var(--color-text-bg)', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer' }}>
               Agregar
             </button>
           </div>

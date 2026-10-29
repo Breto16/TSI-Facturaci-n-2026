@@ -100,7 +100,8 @@ export default function ModalRealizarCierre({
             <div style={{
               display: 'flex', justifyContent: 'space-between',
               padding: '8px 12px', borderRadius: 8,
-              background: Math.abs(diferencia) < 1 ? '#cbdbd0' : '#fef2f2',
+              background: Math.abs(diferencia) < 1 ? 'rgba(82, 163, 106, 0.15)' : 'rgba(207, 102, 121, 0.15)',
+                  border: Math.abs(diferencia) < 1 ? '1px solid rgba(82, 163, 106, 0.3)' : '1px solid rgba(207, 102, 121, 0.3)',
               marginBottom: 16,
             }}>
               <span style={{ fontWeight: 600, color: Math.abs(diferencia) < 1 ? 'var(--color-primary)' : 'var(--color-danger)' }}>

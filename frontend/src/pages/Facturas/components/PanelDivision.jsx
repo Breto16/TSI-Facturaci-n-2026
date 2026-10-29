@@ -31,8 +31,8 @@ const ModalConfirmacionHija = ({ show, onHide, titulo, descripcion, onConfirmar,
         <div style={{ borderRadius: 16, overflow: 'hidden' }}>
             <div style={{ background: GRADIENTS.azul, padding: '1.25rem 1.5rem' }}>
                 <div className="d-flex align-items-center justify-content-between">
-                    <span className="fw-bold text-white fs-5">{titulo}</span>
-                    <button onClick={onHide} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+                    <span className="fw-bold fs-5" style={{ color: "var(--color-text-bg)" }}>{titulo}</span>
+                    <button onClick={onHide} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', color: 'var(--color-text-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
                 </div>
             </div>
             <div style={{ background: 'var(--color-surface)', padding: '1.5rem' }}>
@@ -442,10 +442,10 @@ export default function PanelDivision({
                 <div style={{ borderRadius: 16, overflow: 'hidden' }}>
                     <div style={{ background: GRADIENTS.bosque, padding: '1.25rem 1.5rem' }}>
                         <div className="d-flex align-items-center justify-content-between">
-                            <span className="fw-bold text-white fs-5">Cobrar #{hijaSeleccionada?.id}</span>
-                            <button onClick={() => setModalPago(false)} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+                            <span className="fw-bold fs-5" style={{ color: "var(--color-text-bg)" }}>Cobrar #{hijaSeleccionada?.id}</span>
+                            <button onClick={() => setModalPago(false)} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', color: 'var(--color-text-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
                         </div>
-                        <div className="text-white opacity-70 small mt-1">
+                        <div className="opacity-70 small mt-1" style={{ color: "var(--color-text-bg)" }}>
                             Total: <strong>₡{hijaTotal.toLocaleString('es-CR')}</strong>
                         </div>
                     </div>

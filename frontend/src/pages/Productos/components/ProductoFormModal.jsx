@@ -135,7 +135,7 @@ export default function ProductoFormModal({ show, onHide, producto, onGuardar })
           {error && (
             <div
               className="mb-3 p-2 rounded small"
-              style={{ background: '#fef2f2', color: '#c70009', border: '1px solid #fecaca' }}
+              style={{ background: 'rgba(207, 102, 121, 0.15)', color: 'var(--color-danger)', border: '1px solid rgba(207, 102, 121, 0.3)' }}
             >
               {error}
             </div>

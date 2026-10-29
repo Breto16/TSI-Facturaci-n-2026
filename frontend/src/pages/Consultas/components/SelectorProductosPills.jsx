@@ -115,7 +115,7 @@ export default function SelectorProductosPills({ seleccionados, onChange }) {
                 alignItems: 'center',
                 gap: 6,
                 background: 'var(--color-primary)',
-                color: 'white',
+                color: 'var(--color-text-bg)',
                 borderRadius: 8,
                 padding: '4px 10px',
                 fontSize: '0.78rem',
