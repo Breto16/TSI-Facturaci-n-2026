@@ -5,6 +5,7 @@ import { sileo } from 'sileo'
 import { GRADIENTS } from '../../../constants/theme'
 import { crearHija, actualizarEstado, actualizarTotales, getItems, getFactura } from '../../../services/facturasService'
 import { actualizarDetalle } from '../../../services/facturasService'
+import { imprimirFactura, abrirCaja } from '../../../services/impresionService'
 
 const BTN_BASE = {
     background: 'transparent',
@@ -116,11 +117,18 @@ export default function PanelDivision({
     const handleImprimirHija = async () => {
         if (!hijaSeleccionada) return
         try {
-            await actualizarEstado(hijaSeleccionada.id, { estado: 'impresa' })
+            if (hijaSeleccionada.estado !== 'pagada') {
+                await actualizarEstado(hijaSeleccionada.id, { estado: 'impresa' })
+            }
+            await imprimirFactura(hijaSeleccionada.id)
             sileo.success({ title: 'Imprimiendo', description: `Hija #${hijaSeleccionada.id} enviada a impresora` })
             onRefrescar(hijaSeleccionada.id)
-        } catch {
-            sileo.error({ title: 'Error', description: 'No se pudo imprimir' })
+        } catch (err) {
+            if (err?.response?.data?.sinImpresora) {
+                sileo.warning({ title: 'Sin impresora', description: 'No se encontro impresora.' })
+            } else {
+                sileo.error({ title: 'Error', description: 'No se pudo imprimir' })
+            }
         }
     }
 
@@ -138,6 +146,9 @@ export default function PanelDivision({
                 monto_recibido: tipoPago === 'efectivo' ? parseFloat(montoRecibido) : null,
                 cambio,
             })
+            if (tipoPago === 'efectivo') {
+                try { await abrirCaja() } catch { }
+            }
             sileo.success({ title: 'Cobrada', description: `Hija #${hijaSeleccionada.id} cobrada` })
             setModalPago(false)
             setMontoRecibido('')
@@ -400,6 +411,16 @@ export default function PanelDivision({
                                 </div>
                             </div>
                         )}
+                        {hijaSeleccionada?.estado === 'pagada' && (
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6, flexShrink: 0 }}>
+                                <button
+                                    onClick={handleImprimirHija}
+                                    style={{ ...BTN_BASE, border: '1px solid var(--color-btn-secondary-border)', color: 'var(--color-btn-secondary-text)' }}
+                                >
+                                    Imprimir
+                                </button>
+                            </div>
+                        )}
                     </>
                 )}
             </div>
@@ -459,6 +480,14 @@ export default function PanelDivision({
                                     type="number"
                                     value={montoRecibido}
                                     onChange={e => setMontoRecibido(e.target.value)}
+                                    onKeyDown={e => {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault()
+                                            if (!procesando && montoRecibido) {
+                                                handlePagarHija()
+                                            }
+                                        }
+                                    }}
                                     style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '1.1rem', textAlign: 'right' }}
                                 />
                                 {montoRecibido && (

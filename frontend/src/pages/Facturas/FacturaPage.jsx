@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Modal, Spinner } from 'react-bootstrap'
-import { Fish, ClipboardList } from 'lucide-react'
+import { Fish, ClipboardList, Printer, Split, Ban, CreditCard } from 'lucide-react'
 import { sileo } from 'sileo'
 import { GRADIENTS } from '../../constants/theme'
 import TablaItems from './components/TablaItems'
@@ -455,13 +455,15 @@ export default function FacturaPage() {
 
     const handleImprimir = async () => {
         try {
-            const f = await actualizarEstado(id, { estado: 'impresa' })
-            setFactura(f)
+            if (factura.estado !== 'pagada' && factura.estado !== 'dividida') {
+                const f = await actualizarEstado(id, { estado: 'impresa' })
+                setFactura(f)
+            }
             await imprimirFactura(id)
             sileo.success({ title: 'Imprimiendo', description: `Factura #${id} enviada a impresora` })
         } catch (err) {
             if (err.response?.data?.sinImpresora) {
-                sileo.warning({ title: 'Sin impresora', description: 'No se encontro impresora. El estado fue actualizado.' })
+                sileo.warning({ title: 'Sin impresora', description: factura.estado === 'pagada' ? 'No se encontro impresora.' : 'No se encontro impresora. El estado fue actualizado.' })
             } else {
                 sileo.error({ title: 'Error', description: 'No se pudo imprimir' })
             }
@@ -629,6 +631,31 @@ export default function FacturaPage() {
                     >
                         <ClipboardList size={14} />
                         {vistaPanel === 'productos' ? 'Ver comandas' : 'Ver productos'}
+                    </button>
+                )}
+                {factura.estado === 'pagada' && (
+                    <button
+                        onClick={handleImprimir}
+                        title="Imprimir factura"
+                        style={{
+                            background: 'var(--color-surface)',
+                            border: '1px solid var(--color-btn-secondary-border)',
+                            borderRadius: 8,
+                            padding: '4px 10px',
+                            cursor: 'pointer',
+                            color: 'var(--color-btn-secondary-text)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 6,
+                            fontSize: '0.78rem',
+                            fontWeight: 600,
+                            flexShrink: 0,
+                            whiteSpace: 'nowrap'
+                        }}
+                    >
+                        <Printer size={14} />
+                        <span className="d-none d-sm-inline">Imprimir factura</span>
+                        <span className="d-sm-none">Imprimir</span>
                     </button>
                 )}
             </div>
@@ -822,23 +849,46 @@ export default function FacturaPage() {
 
                     {/* CAMBIO 2: botones con fondo solido, solo si editable */}
                     {editable && (
-                        <div style={{ display: 'flex', gap: 8, flexShrink: 0, flexWrap: 'wrap' }}>
-                            <button onClick={() => setModalAnular(true)} style={{ ...BTN_BASE, background: 'var(--color-danger)', color: 'var(--color-text-bg)' }}>
-                                Anular
-                            </button>
-                            <button onClick={() => setModalDividir(true)} style={{ ...BTN_BASE, background: 'var(--color-info)', color: 'var(--color-text-bg)' }}>
-                                Dividir
-                            </button>
+                        <div style={{ display: 'flex', gap: 8, flexShrink: 0, flexWrap: 'wrap', alignItems: 'center' }}>
+                            {editable && (
+                                <>
+                                    <button
+                                        onClick={() => setModalAnular(true)}
+                                        title="Anular"
+                                        style={{ ...BTN_BASE, background: 'var(--color-danger)', color: 'var(--color-text-bg)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                                    >
+                                        <Ban size={16} />
+                                        <span className="d-none d-md-inline">Anular</span>
+                                    </button>
+                                    <button
+                                        onClick={() => setModalDividir(true)}
+                                        title="Dividir"
+                                        style={{ ...BTN_BASE, background: 'var(--color-info)', color: 'var(--color-text-bg)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                                    >
+                                        <Split size={16} />
+                                        <span className="d-none d-md-inline">Dividir</span>
+                                    </button>
+                                </>
+                            )}
                             <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
-                                <button onClick={handleImprimir} style={{ ...BTN_BASE, background: 'var(--color-surface)', border: '2px solid var(--color-btn-secondary-border)', color: 'var(--color-btn-secondary-text)' }}>
-                                    Imprimir
-                                </button>
                                 <button
-                                    onClick={() => { setModalPago(true); setTipoPago('tarjeta'); setMontoRecibido('') }}
-                                    style={{ ...BTN_BASE, background: 'var(--color-primary)', color: 'var(--color-text-bg)' }}
+                                    onClick={handleImprimir}
+                                    title="Imprimir"
+                                    style={{ ...BTN_BASE, background: 'var(--color-surface)', border: '2px solid var(--color-btn-secondary-border)', color: 'var(--color-btn-secondary-text)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
                                 >
-                                    Pagar
+                                    <Printer size={16} />
+                                    <span className="d-none d-md-inline">Imprimir</span>
                                 </button>
+                                {editable && (
+                                    <button
+                                        onClick={() => { setModalPago(true); setTipoPago('tarjeta'); setMontoRecibido('') }}
+                                        title="Pagar"
+                                        style={{ ...BTN_BASE, background: 'var(--color-primary)', color: 'var(--color-text-bg)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                                    >
+                                        <CreditCard size={16} />
+                                        <span className="d-none d-md-inline">Pagar</span>
+                                    </button>
+                                )}
                             </div>
                         </div>
                     )}
@@ -987,6 +1037,14 @@ export default function FacturaPage() {
                                             type="number"
                                             value={montoRecibido}
                                             onChange={e => setMontoRecibido(e.target.value)}
+                                            onKeyDown={e => {
+                                                if (e.key === 'Enter') {
+                                                    e.preventDefault()
+                                                    if (!procesando && montoRecibido) {
+                                                        handlePagar()
+                                                    }
+                                                }
+                                            }}
                                             style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '1.1rem', textAlign: 'right' }}
                                         />
                                         {montoRecibido && (

@@ -88,6 +88,30 @@ export default function CierrePage() {
     .map(id => consultasResultados[id])
     .filter(Boolean)
 
+  const cardsVisibles = consultasRapidas.filter(c => consultasSeleccionadas.includes(c.id))
+
+  // Distribuir en filas equilibradas (máximo 4, mínimo 2 por fila si total > 1)
+  const distribuirCards = (cards) => {
+    const n = cards.length
+    if (n === 0) return []
+    if (n <= 4) return [cards]
+
+    const numFilas = Math.ceil(n / 4)
+    const base = Math.floor(n / numFilas)
+    const resto = n % numFilas
+
+    const filas = []
+    let cursor = 0
+    for (let i = 0; i < numFilas; i++) {
+      const tamanoFila = base + (i < resto ? 1 : 0)
+      filas.push(cards.slice(cursor, cursor + tamanoFila))
+      cursor += tamanoFila
+    }
+    return filas
+  }
+
+  const filasCards = distribuirCards(cardsVisibles)
+
   if (!desbloqueado) {
     return (
       <ModalPasswordCierre
@@ -118,18 +142,32 @@ export default function CierrePage() {
 
       <div className="d-flex flex-column gap-4">
 
-        {/* Cards de consultas rápidas, 100% del ancho */}
-        {consultasRapidas.filter(c => consultasSeleccionadas.includes(c.id)).length > 0 && (
-          <div className="d-flex flex-wrap gap-3">
-            {consultasRapidas
-              .filter(c => consultasSeleccionadas.includes(c.id))
-              .map(c => (
-                <CardConsultaRapida
-                  key={c.id}
-                  consulta={c}
-                  onResultado={handleResultadoConsulta}
-                />
-              ))}
+        {/* Cards de consultas rápidas, equilibradas (máx 4, mín 2) */}
+        {cardsVisibles.length > 0 && (
+          <div className="d-flex flex-column gap-3">
+            {filasCards.map((fila, fIndex) => (
+              <div key={fIndex} className="row g-3">
+                {fila.map(c => (
+                  <div
+                    key={c.id}
+                    className={
+                      fila.length === 4
+                        ? 'col-12 col-sm-6 col-lg-3'
+                        : fila.length === 3
+                          ? 'col-12 col-md-4'
+                          : fila.length === 2
+                            ? 'col-12 col-md-6'
+                            : 'col-12'
+                    }
+                  >
+                    <CardConsultaRapida
+                      consulta={c}
+                      onResultado={handleResultadoConsulta}
+                    />
+                  </div>
+                ))}
+              </div>
+            ))}
           </div>
         )}
 
@@ -139,20 +177,20 @@ export default function CierrePage() {
             <div style={{ borderRadius: 16, overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.08)', height: '100%' }}>
               <div style={{ background: 'var(--color-primary)', padding: '1.25rem 1.5rem' }}>
                 <div className="row g-2">
-                  <div className="col-6">
+                  <div className="col-12 col-sm-6">
                     <input
                       type="date"
                       value={cierreFechaDesde}
                       onChange={e => setCierreFechaDesde(e.target.value)}
-                      style={{ width: '100%', padding: '6px 10px', borderRadius: 8, border: 'none', background: 'rgba(255,255,255,0.15)', color: 'var(--color-text-bg)', fontSize: '0.85rem' }}
+                      style={{ width: '100%', minWidth: 0, maxWidth: '100%', boxSizing: 'border-box', padding: '6px 10px', borderRadius: 8, border: 'none', background: 'rgba(255,255,255,0.15)', color: 'var(--color-text-bg)', fontSize: '0.85rem' }}
                     />
                   </div>
-                  <div className="col-6">
+                  <div className="col-12 col-sm-6">
                     <input
                       type="date"
                       value={cierreFechaHasta}
                       onChange={e => setCierreFechaHasta(e.target.value)}
-                      style={{ width: '100%', padding: '6px 10px', borderRadius: 8, border: 'none', background: 'rgba(255,255,255,0.15)', color: 'var(--color-text-bg)', fontSize: '0.85rem' }}
+                      style={{ width: '100%', minWidth: 0, maxWidth: '100%', boxSizing: 'border-box', padding: '6px 10px', borderRadius: 8, border: 'none', background: 'rgba(255,255,255,0.15)', color: 'var(--color-text-bg)', fontSize: '0.85rem' }}
                     />
                   </div>
                 </div>
@@ -198,47 +236,47 @@ export default function CierrePage() {
             <div style={{ borderRadius: 16, overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.08)', height: '100%', display: 'flex', flexDirection: 'column' }}>
               <div style={{ background: 'var(--color-primary)', padding: '1.25rem 1.5rem' }}>
                 <div className="row g-2">
-                  <div className="col-6">
+                  <div className="col-12 col-sm-6">
                     <input
                       type="date"
                       value={servicioFechaDesde}
                       onChange={e => setServicioFechaDesde(e.target.value)}
-                      style={{ width: '100%', padding: '6px 10px', borderRadius: 8, border: 'none', background: 'rgba(255,255,255,0.15)', color: 'var(--color-text-bg)', fontSize: '0.85rem' }}
+                      style={{ width: '100%', minWidth: 0, maxWidth: '100%', boxSizing: 'border-box', padding: '6px 10px', borderRadius: 8, border: 'none', background: 'rgba(255,255,255,0.15)', color: 'var(--color-text-bg)', fontSize: '0.85rem' }}
                     />
                   </div>
-                  <div className="col-6">
+                  <div className="col-12 col-sm-6">
                     <input
                       type="date"
                       value={servicioFechaHasta}
                       onChange={e => setServicioFechaHasta(e.target.value)}
-                      style={{ width: '100%', padding: '6px 10px', borderRadius: 8, border: 'none', background: 'rgba(255,255,255,0.15)', color: 'var(--color-text-bg)', fontSize: '0.85rem' }}
+                      style={{ width: '100%', minWidth: 0, maxWidth: '100%', boxSizing: 'border-box', padding: '6px 10px', borderRadius: 8, border: 'none', background: 'rgba(255,255,255,0.15)', color: 'var(--color-text-bg)', fontSize: '0.85rem' }}
                     />
                   </div>
                 </div>
               </div>
 
               <div style={{ background: 'var(--color-surface)', padding: '1.5rem', flex: 1 }}>
-  {cargandoServicio ? (
-    <div className="text-center py-5">
-      <Spinner animation="border" style={{ color: 'var(--color-primary)' }} />
-    </div>
-  ) : servicios.length > 0 ? (
-    <div style={{ maxHeight: 120, overflowY: 'auto' }}>
-      <div className="d-flex flex-column gap-2">
-        {serviciosOrdenados.map(s => (
-          <div key={s.salonero_id} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
-            <span style={{ color: 'var(--color-text)' }}>{s.salonero_nombre}</span>
-            <span style={{ fontWeight: 700, color: 'var(--color-text)' }}>₡{Number(s.total_servicio).toLocaleString('es-CR')}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  ) : (
-    <div className="text-center py-5" style={{ color: 'var(--color-text-secondary)' }}>
-      Sin servicio 10% en este rango
-    </div>
-  )}
-</div>
+                {cargandoServicio ? (
+                  <div className="text-center py-5">
+                    <Spinner animation="border" style={{ color: 'var(--color-primary)' }} />
+                  </div>
+                ) : servicios.length > 0 ? (
+                  <div style={{ maxHeight: 120, overflowY: 'auto' }}>
+                    <div className="d-flex flex-column gap-2">
+                      {serviciosOrdenados.map(s => (
+                        <div key={s.salonero_id} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
+                          <span style={{ color: 'var(--color-text)' }}>{s.salonero_nombre}</span>
+                          <span style={{ fontWeight: 700, color: 'var(--color-text)' }}>₡{Number(s.total_servicio).toLocaleString('es-CR')}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-5" style={{ color: 'var(--color-text-secondary)' }}>
+                    Sin servicio 10% en este rango
+                  </div>
+                )}
+              </div>
 
               <div style={{
                 padding: '14px 20px',

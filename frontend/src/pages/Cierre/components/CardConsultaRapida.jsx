@@ -34,37 +34,39 @@ export default function CardConsultaRapida({ consulta, onResultado }) {
 
   return (
     <div style={{
-      flex: '1 1 280px',
-      minWidth: 280,
+      width: '100%',
+      height: '100%',
       borderRadius: 16,
       overflow: 'hidden',
       boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
+      display: 'flex',
+      flexDirection: 'column',
     }}>
       <div style={{ background: 'var(--color-primary)', padding: '1.25rem 1.5rem' }}>
         <div className="fw-bold fs-5 mb-2" style={{ color: 'var(--color-text-bg)' }}>
           {consulta.titulo}
         </div>
         <div className="row g-2">
-          <div className="col-6">
+          <div className="col-12 col-sm-6">
             <input
               type="date"
               value={fechaDesde}
               onChange={e => setFechaDesde(e.target.value)}
-              style={{ width: '100%', padding: '6px 10px', borderRadius: 8, border: 'none', background: 'rgba(255,255,255,0.15)', color: 'var(--color-text-bg)', fontSize: '0.85rem' }}
+              style={{ width: '100%', minWidth: 0, maxWidth: '100%', boxSizing: 'border-box', padding: '6px 10px', borderRadius: 8, border: 'none', background: 'rgba(255,255,255,0.15)', color: 'var(--color-text-bg)', fontSize: '0.85rem' }}
             />
           </div>
-          <div className="col-6">
+          <div className="col-12 col-sm-6">
             <input
               type="date"
               value={fechaHasta}
               onChange={e => setFechaHasta(e.target.value)}
-              style={{ width: '100%', padding: '6px 10px', borderRadius: 8, border: 'none', background: 'rgba(255,255,255,0.15)', color: 'var(--color-text-bg)', fontSize: '0.85rem' }}
+              style={{ width: '100%', minWidth: 0, maxWidth: '100%', boxSizing: 'border-box', padding: '6px 10px', borderRadius: 8, border: 'none', background: 'rgba(255,255,255,0.15)', color: 'var(--color-text-bg)', fontSize: '0.85rem' }}
             />
           </div>
         </div>
       </div>
 
-      <div style={{ background: 'var(--color-surface)', padding: '0.75rem 1.5rem' }}>
+      <div style={{ background: 'var(--color-surface)', padding: '0.75rem 1.5rem', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
         {cargando ? (
           <div className="text-center py-3">
             <Spinner animation="border" size="sm" style={{ color: 'var(--color-primary)' }} />
